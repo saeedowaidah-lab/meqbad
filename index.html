@@ -1,8 +1,0 @@
-if (!imgData) {
-  const prev = document.getElementById('prevImg');
-  if (prev && prev.src && prev.src.startsWith('data:')) {
-    imgData = prev.src;
-    imgType = prev.src.split(';')[0].replace('data:', '');
-  }
-}
-if (!imgData) { alert('لا توجد صورة — ارفع صورة أولاً'); return; }
