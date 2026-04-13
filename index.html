@@ -1010,15 +1010,9 @@ function saveApiKey() {
 }
 
 async function readAI() {
-  // Always try to recover imgData from the preview image
-  const prevEl = document.getElementById('prevImg');
-  if (prevEl && prevEl.src && prevEl.src.length > 100) {
-    imgData = prevEl.src;
-    imgType = imgData.split(';')[0].replace('data:', '') || 'image/jpeg';
-  }
-  if (!imgData || imgData.length < 100) { 
-    alert('لا توجد صورة — ارفع صورة أو PDF أولاً'); 
-    return; 
+  if (!imgData || imgData.length < 100) {
+    alert('لا توجد صورة — ارفع صورة أو PDF أولاً');
+    return;
   }
   let apiKey = localStorage.getItem('gemini_key')||'';
   if (!apiKey) {
@@ -1033,22 +1027,24 @@ async function readAI() {
     const base64 = imgData.split(',')[1];
     const mt = imgType||'image/jpeg';
     const PROMPT = 'استخرج بيانات هذه الفاتورة وأجب فقط بـ JSON صالح بدون أي نص إضافي:\n{"invoice_number":"","date":"YYYY-MM-DD","supplier_name":"","description":"","subtotal":0,"tax":0,"total":0,"category":"أخرى"}\nالتصنيفات: مخزون وبضاعة، تسويق وإعلانات، شحن وتوصيل، إيجار، رواتب، كهرباء ومياه، صيانة، أخرى\nاحسب المبلغ قبل الضريبة إذا كانت الضريبة 15%.';
-    // OpenRouter API - supports images and PDFs
-    const base64Only = base64;
+    // OpenRouter API - supports images and PDFs via Gemini
     const safeMt2 = ['image/jpeg','image/png','image/gif','image/webp'].includes(mt) ? mt : 'image/jpeg';
-    
+
     let messages;
     if (mt === 'application/pdf') {
-      // For PDF: send as text extraction request with base64
+      // Send PDF as image_url — Gemini 2.0 Flash supports PDFs natively via OpenRouter
       messages = [{
         role: 'user',
-        content: `هذا ملف PDF مشفر بـ base64. استخرج بيانات الفاتورة منه:\n${PROMPT}\n\nمحتوى الملف (base64):\n${base64Only.slice(0, 1000)}...`
+        content: [
+          {type: 'image_url', image_url: {url: `data:application/pdf;base64,${base64}`}},
+          {type: 'text', text: PROMPT}
+        ]
       }];
     } else {
       messages = [{
         role: 'user',
         content: [
-          {type: 'image_url', image_url: {url: `data:${safeMt2};base64,${base64Only}`}},
+          {type: 'image_url', image_url: {url: `data:${safeMt2};base64,${base64}`}},
           {type: 'text', text: PROMPT}
         ]
       }];
