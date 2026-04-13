@@ -477,16 +477,6 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
           <input type="file" id="fileInp" accept="image/*,application/pdf" style="display:none" onchange="handleFile(this)">
           <input type="file" id="camInp" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)">
           <!-- Anthropic API Key -->
-          <div id="apiKeyBox" style="display:none;background:#fef9c3;border:1.5px solid #fde68a;border-radius:9px;padding:11px 14px;margin-bottom:12px">
-            <div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:8px">🔑 أدخل OpenRouter API Key (مجاني)</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <input type="text" id="apiKeyInp" placeholder="sk-or-v1-..." style="flex:1;min-width:200px;padding:8px 12px;border:1.5px solid #fde68a;border-radius:8px;font-family:monospace;font-size:12px;background:#fff" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-              <button class="btn bam sm" onclick="saveApiKey()">حفظ المفتاح</button>
-              <button class="btn brd sm" onclick="clearApiKey()">مسح</button>
-              <button class="btn sm" onclick="document.getElementById('apiKeyBox').style.display='none'">إغلاق</button>
-            </div>
-            <div style="font-size:11px;color:#92400e;margin-top:6px">من: <a href="https://openrouter.ai/keys" target="_blank" style="color:#b45309">openrouter.ai/keys</a> ← Create Key</div>
-          </div>
           <div class="aistat" id="aiStat"><span id="aiIc" style="font-size:18px"></span><span id="aiMsg"></span></div>
           <div class="fgrid">
             <div class="fi"><label>رقم الفاتورة</label><input id="bn" placeholder="INV-001"></div>
@@ -587,15 +577,17 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
           <div id="pwRMsg" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;color:#166534;margin-top:8px"></div>
           <div class="srow"><div class="srl"><div class="sl">تسجيل الخروج</div></div><button class="btn brd sm" onclick="doOut()">خروج من الحساب</button></div>
         </div></div>
+        <div class="card"><div class="ch"><h3>🤖 الذكاء الاصطناعي</h3></div><div class="cb">
+          <div class="srow"><div class="srl"><div class="sl">مفتاح OpenRouter</div><div class="sd">يُحفظ في Supabase ويعمل تلقائياً لجميع الموظفين</div></div>
+            <div style="display:flex;flex-direction:column;gap:6px;min-width:240px">
+              <input type="password" class="si" id="sAiKey" placeholder="sk-or-v1-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-family:monospace;font-size:12px">
+              <span id="keyStatus" style="font-size:11px;color:var(--mu)"></span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn bp sm" onclick="savSet()">💾 حفظ المفتاح</button></div>
+        </div></div>
         <div class="card"><div class="ch"><h3>💾 البيانات</h3></div><div class="cb">
           <div class="srow"><div class="srl"><div class="sl">تصدير نسخة احتياطية</div><div class="sd">JSON من قاعدة البيانات السحابية</div></div><button class="btn bg sm" onclick="exBkp()">⬇ JSON</button></div>
-        <div class="srow"><div class="srl"><div class="sl">مفتاح الذكاء الاصطناعي</div><div class="sd">OpenRouter API Key — مجاني من openrouter.ai/keys</div></div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span id="keyStatus" style="font-size:11px;color:var(--mu)"></span>
-            <button class="btn sm" onclick="chkApiKey()">تحقق</button>
-            <button class="btn brd sm" onclick="resetApiKey()">مسح</button>
-          </div>
-        </div>
         </div></div>
         <div class="card"><div class="ch"><h3>📊 إحصائيات النظام</h3></div><div class="cb np" id="syss"></div></div>
       </div>
@@ -677,6 +669,7 @@ let selM = new Date().getMonth(), selQ = 0;
 let curPage = 'dash';
 let srRes = null, sMI = null, sDI = null;
 let imgData = null, imgType = null;
+let aiKey = '';
 
 // ══════════════════════════════════════════════
 // AUTH
@@ -836,6 +829,11 @@ async function loadSettings() {
       const sn = document.getElementById('sNm'); if(sn) sn.value = nm;
       const sv = document.getElementById('sVN'); if(sv) sv.value = d.vat_number||'';
       const sm = document.getElementById('sMgr'); if(sm) sm.value = mgr;
+      if (d.ai_key) {
+        aiKey = d.ai_key;
+        const sk = document.getElementById('sAiKey'); if(sk) sk.value = d.ai_key;
+        const ks = document.getElementById('keyStatus'); if(ks) { ks.textContent = '✅ مفعّل'; ks.style.color='var(--g)'; }
+      }
     }
   } catch(e) { console.warn('loadSettings:', e); }
 }
@@ -885,10 +883,13 @@ async function savSd(y, m, v) {
 
 async function savSet() {
   const name = document.getElementById('sNm').value;
+  const newKey = document.getElementById('sAiKey').value.trim();
+  if (newKey) aiKey = newKey;
   try {
     await sbUps('store_settings', {user_id:UID, store_name:name,
       vat_number:document.getElementById('sVN').value,
-      manager_name:document.getElementById('sMgr').value});
+      manager_name:document.getElementById('sMgr').value,
+      ai_key: newKey || aiKey});
     const sbn=document.getElementById('sbNm'); if(sbn) sbn.textContent=name;
     const un=document.getElementById('uNm'); if(un) un.textContent=document.getElementById('sMgr').value;
     const t=document.getElementById('setT'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2500);
@@ -994,30 +995,15 @@ function setAI(icon, msg, type) {
   document.getElementById('aiMsg').textContent = msg;
 }
 
-function clearApiKey() {
-  localStorage.removeItem('gemini_key');
-  document.getElementById('apiKeyInp').value = '';
-  setAI('🔑', 'تم مسح المفتاح — أدخل مفتاحاً جديداً', 'load');
-  document.getElementById('apiKeyBox').style.display = 'block';
-}
-
-function saveApiKey() {
-  const k = document.getElementById('apiKeyInp').value.trim();
-  if (!k) { alert('أدخل المفتاح أولاً'); return; }
-  localStorage.setItem('gemini_key', k);
-  document.getElementById('apiKeyBox').style.display = 'none';
-  setAI('✅', 'تم حفظ المفتاح — اضغط قراءة مجدداً', 'ok');
-}
 
 async function readAI() {
   if (!imgData || imgData.length < 100) {
     alert('لا توجد صورة — ارفع صورة أو PDF أولاً');
     return;
   }
-  let apiKey = localStorage.getItem('gemini_key')||'';
+  const apiKey = aiKey || localStorage.getItem('gemini_key') || '';
   if (!apiKey) {
-    document.getElementById('apiKeyBox').style.display = 'block';
-    setAI('🔑', 'أدخل Google Gemini API Key أولاً ثم اضغط قراءة مجدداً', 'load');
+    setAI('🔑', 'لم يتم ضبط مفتاح الذكاء الاصطناعي — تواصل مع المدير لإضافته من الإعدادات', 'err');
     return;
   }
   const btn = document.getElementById('readBtn');
@@ -1066,7 +1052,7 @@ async function readAI() {
     });
     const data = await res.json();
     if (data.error) {
-      if (data.error.code === 401) localStorage.removeItem('gemini_key');
+      if (data.error.code === 401) { aiKey = ''; localStorage.removeItem('gemini_key'); }
       throw new Error(data.error.message || JSON.stringify(data.error));
     }
         const raw = (data.choices?.[0]?.message?.content||'').replace(/```json|```/g,'').trim();
@@ -1097,8 +1083,8 @@ async function readAI() {
     if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
       msg = 'خطأ في الاتصال — تأكد من اتصالك بالإنترنت';
     } else if (msg.includes('401') || msg.includes('auth')) {
-      msg = 'المفتاح غير صحيح — سيتم طلبه مجدداً';
-      localStorage.removeItem('gemini_key');
+      msg = 'المفتاح غير صحيح — راجع الإعدادات';
+      aiKey = ''; localStorage.removeItem('gemini_key');
     }
     setAI('❌', msg, 'err');
   }
@@ -1380,16 +1366,6 @@ function exBkp() {
   const a=document.createElement('a');
   a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(invs,null,2));
   a.download=`backup_${getY()}.json`; a.click();
-}
-function chkApiKey() {
-  const k = localStorage.getItem('gemini_key');
-  const el = document.getElementById('keyStatus');
-  if (k) { el.textContent = '✅ محفوظ: '+k.slice(0,12)+'...'; el.style.color='var(--g)'; }
-  else { el.textContent = '❌ غير محفوظ'; el.style.color='var(--r)'; }
-}
-function resetApiKey() {
-  localStorage.removeItem('gemini_key');
-  alert('✅ تم مسح المفتاح — سيتم طلبه عند الضغط على قراءة');
 }
 
 // ══════════════════════════════════════════════
