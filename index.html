@@ -1389,9 +1389,16 @@ async function applyCorrections() {
   btn.disabled = true; btn.textContent = '⏳ جارٍ التطبيق...';
   try {
     for (const c of CORRECTIONS) {
-      const row = {...c, user_id: UID};
+      const row = {
+        id: c.id, user_id: UID,
+        num: c.num, date: c.date,
+        supplier: c.supplier, cat: c.cat,
+        description: c.desc,
+        sub: c.sub, tax: c.tax, total: c.total,
+        month: c.month, year: c.year
+      };
       await sbPost('invoices', row);
-      invs.unshift({...c, desc: c.desc});
+      invs.unshift({...c});
     }
     document.getElementById('corrBox').style.display = 'none';
     alert('✅ تم تطبيق التصحيحات بنجاح على قاعدة البيانات');
