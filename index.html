@@ -642,6 +642,21 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
         </div></div>
         <div class="card"><div class="ch"><h3>📊 إحصائيات النظام</h3></div><div class="cb np" id="syss"></div></div>
       </div>
+      <!-- سجل العمليات -->
+      <div class="card" style="margin-top:18px">
+        <div class="ch">
+          <h3>🔍 سجل العمليات والتدقيق</h3>
+          <button class="btn sm" onclick="loadAuditLog()">🔄 تحديث</button>
+        </div>
+        <div class="cb" style="padding:0">
+          <div class="tscr">
+            <table class="tbl" style="min-width:600px">
+              <thead><tr><th>التاريخ والوقت</th><th>الموظف</th><th>العملية</th><th>التفاصيل</th><th>عنوان IP</th><th>الجهاز</th></tr></thead>
+              <tbody id="auditLogBody"><tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--mu)">افتح الإعدادات لتحميل السجل</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -692,6 +707,39 @@ async function sbUps(table, body) {
   if (!r.ok) console.warn('upsert:', await r.text());
 }
 
+// ══════════════════════════════════════════════
+// AUDIT LOG
+// ══════════════════════════════════════════════
+async function fetchIP() {
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    const d = await r.json();
+    userIP = d.ip || '—';
+  } catch { userIP = 'غير متاح'; }
+}
+
+async function logAction(action, details = '') {
+  try {
+    const device = /iPhone|iPad|Android/i.test(navigator.userAgent)
+      ? '📱 ' + (navigator.userAgent.match(/(iPhone|iPad|Android)/)?.[0] || 'جوال')
+      : '💻 ' + (navigator.userAgent.match(/(Windows|Mac|Linux)/)?.[0] || 'كمبيوتر');
+    await fetch(`${SURL}/rest/v1/audit_log`, {
+      method: 'POST',
+      headers: {'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates'},
+      body: JSON.stringify({
+        id: Date.now(),
+        user_id: UID,
+        employee: employeeName || 'غير محدد',
+        action,
+        details: details.slice(0, 300),
+        ip: userIP,
+        device,
+        created_at: new Date().toISOString()
+      })
+    });
+  } catch(e) { console.warn('logAction:', e); }
+}
+
 // Auto-login (no SDK needed)
 const SB = { auth: { onAuthStateChange: (cb) => {
   setTimeout(()=>cb('SIGNED_IN',{user:{id:UID,email:'saeedowaidah@gmail.com'}}) ,200);
@@ -724,6 +772,7 @@ let imgData = null, imgType = null;
 let aiKey = '';
 let expSearch = '', expCatFilter = '';
 let undoTimer = null, undoInv = null;
+let userIP = '—', employeeName = localStorage.getItem('emp_name') || '';
 
 // ══════════════════════════════════════════════
 // AUTH
@@ -793,7 +842,14 @@ SB.auth.onAuthStateChange(async (event, session) => {
     const cq = QQ.findIndex(q => q.m.includes(new Date().getMonth()));
     if (cq >= 0) { document.getElementById('vatQ').value = cq; selQ = cq; }
     syncShow('جارٍ تحميل البيانات...', 'load');
+    fetchIP();
+    // طلب اسم الموظف إذا لم يكن محفوظاً
+    if (!employeeName) {
+      const name = prompt('👤 من أنت؟ (اسم الموظف للتدقيق)');
+      if (name && name.trim()) { employeeName = name.trim(); localStorage.setItem('emp_name', employeeName); }
+    }
     await Promise.all([loadInvs(), loadSales(), loadSettings()]);
+    logAction('فتح التطبيق', `المتصفح: ${navigator.userAgent.slice(0,80)}`);
     go('dash');
   } else {
     document.getElementById('aLoad').style.display = 'none';
@@ -920,11 +976,12 @@ async function savB() {
   try {
     await sbPost('invoices', row);
     invs.unshift({id, num:row.num||'', date:dt, supplier:row.supplier||'', cat:row.cat, desc:row.description||'', sub, tax, total, month:d.getMonth(), year:d.getFullYear()});
+    logAction('إضافة فاتورة', `رقم: ${row.num||'—'} | المورد: ${row.supplier||'—'} | المبلغ: ${total} ر.س | ${dt}`);
     rstB(); setAI('','',''); clearDraft(); selM=d.getMonth();
     const t=document.getElementById('bToast'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2500);
     rExp();
   } catch(e) { alert('خطأ: '+e.message); }
-  btn.disabled=false; btn.textContent='💾 حفظ في Supabase';
+  btn.disabled=false; btn.textContent='💾 حفظ';
 }
 
 async function delI(id) {
@@ -939,6 +996,7 @@ async function delI(id) {
   if (undoTimer) clearTimeout(undoTimer);
   undoTimer = setTimeout(async () => {
     banner.style.display = 'none';
+    logAction('حذف فاتورة', `رقم: ${inv.num||'—'} | المورد: ${inv.supplier||'—'} | المبلغ: ${inv.total} ر.س | ${inv.date}`);
     undoInv = null;
     try { await sbDel('invoices', id); } catch(e) { console.warn('delI:', e); }
   }, 6000);
@@ -1187,6 +1245,7 @@ async function readAI() {
       for (const o of s.options) if (o.value===p.category) {s.value=p.category;break;}
     }
     setAI('✅','تم استخراج بيانات الفاتورة — راجع وعدّل إذا لزم','ok');
+    logAction('قراءة فاتورة بالذكاء الاصطناعي', `المورد المستخرج: ${p.supplier_name||'—'} | المبلغ: ${p.total||0}`);
   } catch(err) {
     console.error('readAI error:', err);
     let msg = err.message || 'خطأ غير معروف';
@@ -1537,7 +1596,45 @@ function rSet() {
     <div class="strow"><span class="stl">فواتير عام ${getY()}</span><span class="stv">${yi.length}</span></div>
     <div class="strow"><span class="stl">الموردون</span><span class="stv">${new Set(yi.map(i=>i.supplier||'—')).size}</span></div>
     <div class="strow"><span class="stl">قاعدة البيانات</span><span class="stv" style="color:var(--g)">Supabase ☁️</span></div>
-    <div class="strow"><span class="stl">المستخدم</span><span class="stv" style="font-size:11px">${CU?.email||'-'}</span></div>`;
+    <div class="strow"><span class="stl">المستخدم</span><span class="stv" style="font-size:11px">${CU?.email||'-'}</span></div>
+    <div class="strow"><span class="stl">الموظف الحالي</span><span class="stv" style="color:var(--c2)">${employeeName||'غير محدد'} <button onclick="changeEmployee()" style="font-size:10px;margin-right:8px;background:var(--bd2);border:1px solid var(--bd);border-radius:5px;padding:2px 8px;cursor:pointer;font-family:inherit">تغيير</button></span></div>
+    <div class="strow"><span class="stl">عنوان IP</span><span class="stv" style="font-family:monospace;font-size:12px">${userIP}</span></div>`;
+  loadAuditLog();
+}
+
+function changeEmployee() {
+  const name = prompt('اسم الموظف:', employeeName);
+  if (name !== null && name.trim()) {
+    employeeName = name.trim();
+    localStorage.setItem('emp_name', employeeName);
+    logAction('تغيير اسم الموظف', `الاسم الجديد: ${employeeName}`);
+    rSet();
+  }
+}
+
+async function loadAuditLog() {
+  const el = document.getElementById('auditLogBody');
+  if (!el) return;
+  el.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--mu)">⏳ جارٍ التحميل...</td></tr>';
+  try {
+    const data = await sbGet('audit_log', `user_id=eq.${UID}&order=created_at.desc&limit=50`);
+    if (!data.length) { el.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--mu)">لا توجد سجلات بعد</td></tr>'; return; }
+    el.innerHTML = data.map(r => {
+      const dt = new Date(r.created_at);
+      const dateStr = dt.toLocaleDateString('ar-SA') + ' ' + dt.toLocaleTimeString('ar-SA', {hour:'2-digit',minute:'2-digit'});
+      const actionColor = r.action.includes('حذف')?'var(--r)':r.action.includes('إضافة')?'var(--g)':r.action.includes('فتح')?'var(--b)':'var(--mu)';
+      return `<tr>
+        <td class="mu" style="font-size:11px;white-space:nowrap">${dateStr}</td>
+        <td style="font-weight:800;color:var(--c2)">${r.employee||'—'}</td>
+        <td style="font-weight:700;color:${actionColor}">${r.action}</td>
+        <td style="font-size:11px;color:#555;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.details||''}">${r.details||'—'}</td>
+        <td style="font-family:monospace;font-size:11px;color:var(--mu)">${r.ip||'—'}</td>
+        <td style="font-size:11px;color:var(--mu2)">${r.device||'—'}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--r)">❌ يرجى إنشاء جدول audit_log في Supabase أولاً</td></tr>`;
+  }
 }
 
 function exBkp() {
