@@ -1033,7 +1033,7 @@ async function readAI() {
     alert('لا توجد صورة — ارفع صورة أو PDF أولاً');
     return;
   }
-  const apiKey = aiKey || localStorage.getItem('ai_key') || localStorage.getItem('gemini_key') || '';
+  const apiKey = aiKey || localStorage.getItem('ai_key') || localStorage.getItem('gemini_key') || 'AIzaSyDDkjeJbtH4qE1tmSBg1_2R6z5wY5IlaDU';
   if (!apiKey) {
     setAI('🔑', 'لم يتم ضبط مفتاح الذكاء الاصطناعي — راجع الإعدادات', 'err');
     return;
@@ -1049,7 +1049,7 @@ async function readAI() {
 
     // Google Gemini API (مجاني وموثوق)
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey.trim()}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey.trim()}`,
       {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
