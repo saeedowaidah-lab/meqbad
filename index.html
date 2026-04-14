@@ -1069,8 +1069,13 @@ async function readAI() {
     });
     const data = await res.json();
     if (data.error) {
-      if (data.error.code === 401) { aiKey = ''; localStorage.removeItem('gemini_key'); }
-      throw new Error(data.error.message || JSON.stringify(data.error));
+      const code = data.error.code || res.status;
+      const emsg = data.error.message || JSON.stringify(data.error);
+      if (code === 401 || emsg.toLowerCase().includes('user not found') || emsg.toLowerCase().includes('invalid') || emsg.toLowerCase().includes('unauthorized')) {
+        aiKey = ''; localStorage.removeItem('gemini_key'); localStorage.removeItem('ai_key');
+        throw new Error('المفتاح غير صالح — اذهب إلى openrouter.ai وأنشئ مفتاحاً جديداً');
+      }
+      throw new Error(emsg);
     }
         const raw = (data.choices?.[0]?.message?.content||'').replace(/```json|```/g,'').trim();
     const p = JSON.parse(raw);
