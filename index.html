@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>متجر مقبض</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1071,9 +1073,8 @@ async function readAI() {
     if (data.error) {
       const code = data.error.code || res.status;
       const emsg = data.error.message || JSON.stringify(data.error);
-      if (code === 401 || emsg.toLowerCase().includes('user not found') || emsg.toLowerCase().includes('invalid') || emsg.toLowerCase().includes('unauthorized')) {
-        aiKey = ''; localStorage.removeItem('gemini_key'); localStorage.removeItem('ai_key');
-        throw new Error('المفتاح غير صالح — اذهب إلى openrouter.ai وأنشئ مفتاحاً جديداً');
+      if (code === 401 || emsg.toLowerCase().includes('user not found') || emsg.toLowerCase().includes('unauthorized')) {
+        throw new Error('خطأ في المصادقة: ' + emsg);
       }
       throw new Error(emsg);
     }
