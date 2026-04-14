@@ -826,9 +826,10 @@ async function loadSettings() {
       const sn = document.getElementById('sNm'); if(sn) sn.value = nm;
       const sv = document.getElementById('sVN'); if(sv) sv.value = d.vat_number||'';
       const sm = document.getElementById('sMgr'); if(sm) sm.value = mgr;
-      if (d.ai_key) {
-        aiKey = d.ai_key;
-        const sk = document.getElementById('sAiKey'); if(sk) sk.value = d.ai_key;
+      const storedKey = d.ai_key || localStorage.getItem('ai_key') || '';
+      if (storedKey) {
+        aiKey = storedKey;
+        const sk = document.getElementById('sAiKey'); if(sk) sk.value = storedKey;
         const ks = document.getElementById('keyStatus'); if(ks) { ks.textContent = '✅ مفعّل'; ks.style.color='var(--g)'; }
       }
     }
@@ -881,12 +882,16 @@ async function savSd(y, m, v) {
 async function savSet() {
   const name = document.getElementById('sNm').value;
   const newKey = document.getElementById('sAiKey').value.trim();
-  if (newKey) aiKey = newKey;
+  if (newKey) {
+    aiKey = newKey;
+    localStorage.setItem('ai_key', newKey);
+    const ks = document.getElementById('keyStatus');
+    if (ks) { ks.textContent = '✅ مفعّل'; ks.style.color='var(--g)'; }
+  }
   try {
     await sbUps('store_settings', {user_id:UID, store_name:name,
       vat_number:document.getElementById('sVN').value,
-      manager_name:document.getElementById('sMgr').value,
-      ai_key: newKey || aiKey});
+      manager_name:document.getElementById('sMgr').value});
     const sbn=document.getElementById('sbNm'); if(sbn) sbn.textContent=name;
     const un=document.getElementById('uNm'); if(un) un.textContent=document.getElementById('sMgr').value;
     const t=document.getElementById('setT'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2500);
@@ -998,7 +1003,7 @@ async function readAI() {
     alert('لا توجد صورة — ارفع صورة أو PDF أولاً');
     return;
   }
-  const apiKey = aiKey || localStorage.getItem('gemini_key') || '';
+  const apiKey = aiKey || localStorage.getItem('ai_key') || localStorage.getItem('gemini_key') || '';
   if (!apiKey) {
     setAI('🔑', 'لم يتم ضبط مفتاح الذكاء الاصطناعي — تواصل مع المدير لإضافته من الإعدادات', 'err');
     return;
