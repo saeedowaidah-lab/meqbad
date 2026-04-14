@@ -1019,6 +1019,7 @@ function clrImg() {
 function setAI(icon, msg, type) {
   const el = document.getElementById('aiStat');
   if (!msg) { el.className='aistat'; el.style.display='none'; return; }
+  el.style.display = '';
   el.className = 'aistat ' + type;
   document.getElementById('aiIc').textContent = icon;
   document.getElementById('aiMsg').textContent = msg;
@@ -1030,7 +1031,7 @@ async function readAI() {
     alert('لا توجد صورة — ارفع صورة أو PDF أولاً');
     return;
   }
-  const apiKey = aiKey || localStorage.getItem('ai_key') || localStorage.getItem('gemini_key') || '';
+  const apiKey = aiKey || localStorage.getItem('ai_key') || localStorage.getItem('gemini_key') || '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';
   if (!apiKey) {
     setAI('🔑', 'لم يتم ضبط مفتاح الذكاء الاصطناعي — تواصل مع المدير لإضافته من الإعدادات', 'err');
     return;
