@@ -602,6 +602,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 </div>
 
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -954,7 +955,7 @@ function handleDrop(e) {
   e.preventDefault();
   document.getElementById('imgZone').style.borderColor = 'var(--bd)';
   const f = e.dataTransfer.files[0];
-  if (f && f.type.startsWith('image/')) processImg(f);
+  if (f) processImg(f);
 }
 
 function handleFile(inp) {
@@ -963,22 +964,48 @@ function handleFile(inp) {
 }
 
 function processImg(file) {
+  if (file.type === 'application/pdf') {
+    processPDF(file);
+    return;
+  }
   const r = new FileReader();
   r.onload = e => {
     imgData = e.target.result; imgType = file.type;
     const prev = document.getElementById('prevImg');
-    if (file.type === 'application/pdf') {
-      prev.style.cssText = 'width:80px;height:100px';
-      prev.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='100'%3E%3Crect width='80' height='100' rx='8' fill='%23fee2e2'/%3E%3Ctext x='40' y='58' text-anchor='middle' font-size='32'%3E%F0%9F%93%84%3C/text%3E%3Ctext x='40' y='82' text-anchor='middle' font-size='13' fill='%23dc2626' font-weight='bold'%3EPDF%3C/text%3E%3C/svg%3E";
-    } else {
-      prev.style.cssText = '';
-      prev.src = imgData;
-    }
+    prev.style.cssText = '';
+    prev.src = imgData;
     document.getElementById('imgPh').style.display = 'none';
     document.getElementById('imgPv').style.display = 'block';
     setAI('','','');
   };
   r.readAsDataURL(file);
+}
+
+async function processPDF(file) {
+  document.getElementById('imgPh').style.display = 'none';
+  document.getElementById('imgPv').style.display = 'block';
+  setAI('⏳', 'جارٍ تحويل PDF إلى صورة...', 'load');
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js غير محمّل');
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({scale: 2});
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+    imgData = canvas.toDataURL('image/jpeg', 0.92);
+    imgType = 'image/jpeg';
+    const prev = document.getElementById('prevImg');
+    prev.style.cssText = '';
+    prev.src = imgData;
+    setAI('✅', 'تم تحويل PDF — اضغط قراءة بالذكاء الاصطناعي', 'ok');
+  } catch(e) {
+    setAI('❌', 'خطأ في تحويل PDF: ' + e.message, 'err');
+  }
 }
 
 function clrImg() {
@@ -1016,27 +1043,14 @@ async function readAI() {
     const mt = imgType||'image/jpeg';
     const PROMPT = 'استخرج بيانات هذه الفاتورة وأجب فقط بـ JSON صالح بدون أي نص إضافي:\n{"invoice_number":"","date":"YYYY-MM-DD","supplier_name":"","description":"","subtotal":0,"tax":0,"total":0,"category":"أخرى"}\nالتصنيفات: مخزون وبضاعة، تسويق وإعلانات، شحن وتوصيل، إيجار، رواتب، كهرباء ومياه، صيانة، أخرى\nاحسب المبلغ قبل الضريبة إذا كانت الضريبة 15%.';
     // OpenRouter API - supports images and PDFs via Gemini
-    const safeMt2 = ['image/jpeg','image/png','image/gif','image/webp'].includes(mt) ? mt : 'image/jpeg';
-
-    let messages;
-    if (mt === 'application/pdf') {
-      // Send PDF as image_url — Gemini 2.0 Flash supports PDFs natively via OpenRouter
-      messages = [{
-        role: 'user',
-        content: [
-          {type: 'image_url', image_url: {url: `data:application/pdf;base64,${base64}`}},
-          {type: 'text', text: PROMPT}
-        ]
-      }];
-    } else {
-      messages = [{
-        role: 'user',
-        content: [
-          {type: 'image_url', image_url: {url: `data:${safeMt2};base64,${base64}`}},
-          {type: 'text', text: PROMPT}
-        ]
-      }];
-    }
+    const safeMt = ['image/jpeg','image/png','image/gif','image/webp'].includes(mt) ? mt : 'image/jpeg';
+    const messages = [{
+      role: 'user',
+      content: [
+        {type: 'image_url', image_url: {url: `data:${safeMt};base64,${base64}`}},
+        {type: 'text', text: PROMPT}
+      ]
+    }];
 
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
