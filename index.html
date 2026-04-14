@@ -1097,8 +1097,8 @@ async function readAI() {
   } catch(err) {
     console.error('readAI error:', err);
     let msg = err.message || 'خطأ غير معروف';
-    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-      msg = 'خطأ في الاتصال — تأكد من اتصالك بالإنترنت';
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed') || msg.includes('Network request failed')) {
+      msg = 'فشل الاتصال بخادم الذكاء الاصطناعي — تأكد من اتصالك بالإنترنت وأعد المحاولة';
     } else if (msg.includes('401') || msg.includes('auth')) {
       msg = 'المفتاح غير صحيح — راجع الإعدادات';
       aiKey = ''; localStorage.removeItem('gemini_key');
