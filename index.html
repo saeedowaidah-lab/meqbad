@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
+<meta name="theme-color" content="#1a3c5e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="مقبض">
+<link rel="manifest" href="manifest.json">
 <title>متجر مقبض</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -328,15 +334,26 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 .sgv{font-weight:800;color:var(--c2)}
 .sgv.r{color:var(--r)}.sgv.b{color:var(--b)}.sgv.g{color:var(--g)}
 
+/* ─── BOTTOM NAV (mobile) ─── */
+#bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid var(--bd);z-index:500;padding:6px 0 max(6px,env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.08)}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;color:var(--mu2);font-size:9.5px;font-weight:800;transition:all .15s;border:none;background:none;font-family:inherit}
+.bni.on{color:var(--c2)}.bni .bnic{font-size:22px;line-height:1}
+.bni.add-fab{background:linear-gradient(135deg,var(--c2),var(--c3));color:#fff;border-radius:16px;margin:-16px 8px 0;padding:10px 20px;box-shadow:0 4px 18px rgba(26,60,94,.4);font-size:10px}
+.bni.add-fab .bnic{font-size:24px}
+
+/* ─── DRAFT BANNER ─── */
+#draftBanner{display:none;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px;align-items:center;justify-content:space-between;gap:10px}
+
 @media(max-width:900px){
   .main{margin-right:0}.sb{transform:translateX(100%)}.sb.open{transform:translateX(0)}
   .ham{display:flex}.q3{grid-template-columns:1fr 1fr}.setgrid{grid-template-columns:1fr}
-  .mcrow{grid-template-columns:repeat(2,1fr)}.content{padding:16px}.topbar{padding:0 16px}
+  .mcrow{grid-template-columns:repeat(2,1fr)}.content{padding:16px 14px 80px}.topbar{padding:0 16px}
   .two,.twoeq{grid-template-columns:1fr}.sum2{grid-template-columns:1fr}
+  #bnav{display:flex}
 }
 @media(max-width:480px){
   .mcrow{grid-template-columns:1fr}.q3{grid-template-columns:1fr}
-  .sgrid,.agrid,.dlgrid{grid-template-columns:1fr}.content{padding:12px}
+  .sgrid,.agrid,.dlgrid{grid-template-columns:1fr}.content{padding:12px 10px 80px}
 }
 </style>
 
@@ -379,6 +396,15 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 <!-- ═══ APP ═══ -->
 <div id="app">
 <div id="sbo" class="sbovl" onclick="clSB()"></div>
+
+<!-- BOTTOM NAV -->
+<nav id="bnav">
+  <button class="bni" id="bn-dash" onclick="go('dash')"><span class="bnic">📊</span>الرئيسية</button>
+  <button class="bni" id="bn-exp" onclick="go('exp')"><span class="bnic">🧾</span>المصروفات</button>
+  <button class="bni add-fab" onclick="go('exp');setTimeout(()=>document.getElementById('imgZone').scrollIntoView({behavior:'smooth'}),200)"><span class="bnic">➕</span>فاتورة</button>
+  <button class="bni" id="bn-profit" onclick="go('profit')"><span class="bnic">💰</span>الأرباح</button>
+  <button class="bni" id="bn-rep" onclick="go('rep')"><span class="bnic">📋</span>التقارير</button>
+</nav>
 
 <!-- SIDEBAR -->
 <aside class="sb" id="sb">
@@ -482,19 +508,24 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
           <input type="file" id="camInp" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)">
           <!-- Anthropic API Key -->
           <div class="aistat" id="aiStat"><span id="aiIc" style="font-size:18px"></span><span id="aiMsg"></span></div>
+          <div id="draftBanner">
+            <span>📝 يوجد مسودة محفوظة — هل تريد استعادتها؟</span>
+            <div style="display:flex;gap:8px"><button onclick="loadDraft()" style="background:var(--c2);color:#fff;border:none;border-radius:7px;padding:4px 12px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer">استعادة</button><button onclick="clearDraft();document.getElementById('draftBanner').style.display='none'" style="background:none;border:1px solid #fcd34d;border-radius:7px;padding:4px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;color:#92400e">تجاهل</button></div>
+          </div>
+          <div id="monthlyInfo" style="background:linear-gradient(135deg,#eff6ff,#e0f2fe);border-radius:9px;padding:10px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--c2)"></div>
           <div class="fgrid">
-            <div class="fi"><label>رقم الفاتورة</label><input id="bn" placeholder="INV-001"></div>
-            <div class="fi"><label>التاريخ</label><input type="date" id="bd"></div>
-            <div class="fi"><label>المورد</label><input id="bs" placeholder="اسم المورد"></div>
-            <div class="fi"><label>التصنيف</label><select id="bc"><option>مخزون وبضاعة</option><option>تسويق وإعلانات</option><option>شحن وتوصيل</option><option>إيجار</option><option>رواتب</option><option>كهرباء ومياه</option><option>صيانة</option><option>أخرى</option></select></div>
-            <div class="fi" style="grid-column:span 2"><label>البيان</label><textarea id="bds" placeholder="وصف الفاتورة..."></textarea></div>
+            <div class="fi"><label>رقم الفاتورة</label><input id="bn" placeholder="INV-001" oninput="saveDraft()"></div>
+            <div class="fi"><label>التاريخ</label><input type="date" id="bd" onchange="saveDraft();updateMonthlyInfo()"></div>
+            <div class="fi"><label>المورد</label><input id="bs" placeholder="اسم المورد" oninput="saveDraft()"></div>
+            <div class="fi"><label>التصنيف</label><select id="bc" onchange="saveDraft()"><option>مخزون وبضاعة</option><option>تسويق وإعلانات</option><option>شحن وتوصيل</option><option>إيجار</option><option>رواتب</option><option>كهرباء ومياه</option><option>صيانة</option><option>أخرى</option></select></div>
+            <div class="fi" style="grid-column:span 2"><label>البيان</label><textarea id="bds" placeholder="وصف الفاتورة..." oninput="saveDraft()"></textarea></div>
           </div>
           <div class="totrow">
-            <div class="ti" style="flex:1.5"><div class="tl">المبلغ قبل الضريبة (ر.س)</div><input class="tinp" id="bsub" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcB()"></div>
+            <div class="ti" style="flex:1.5"><div class="tl">المبلغ قبل الضريبة (ر.س)</div><input class="tinp" id="bsub" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcB();saveDraft()"></div>
             <div class="ti"><div class="tl">الضريبة 15%</div><div class="tv r" id="btx">0.00 ر.س</div></div>
             <div class="ti"><div class="tl">الإجمالي</div><div class="tv" id="btot">0.00 ر.س</div></div>
           </div>
-          <div class="fac"><button class="btn" onclick="rstB()">إلغاء</button><button class="btn bp" id="savBtn" onclick="savB()">💾 حفظ في Supabase</button></div>
+          <div class="fac"><button class="btn" onclick="rstB()">إلغاء</button><button class="btn bp" id="savBtn" onclick="savB()" title="Ctrl+Enter">💾 حفظ</button></div>
           <div class="toast ok" id="bToast">✅ تم حفظ الفاتورة بنجاح ☁️</div>
         </div>
       </div>
@@ -889,7 +920,7 @@ async function savB() {
   try {
     await sbPost('invoices', row);
     invs.unshift({id, num:row.num||'', date:dt, supplier:row.supplier||'', cat:row.cat, desc:row.description||'', sub, tax, total, month:d.getMonth(), year:d.getFullYear()});
-    rstB(); setAI('','',''); selM=d.getMonth();
+    rstB(); setAI('','',''); clearDraft(); selM=d.getMonth();
     const t=document.getElementById('bToast'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2500);
     rExp();
   } catch(e) { alert('خطأ: '+e.message); }
@@ -1000,12 +1031,21 @@ function go(p) {
   document.getElementById('pgT').textContent = PN[p];
   document.getElementById('pgB').textContent = PN[p];
   curPage = p; clSB();
+  updateBottomNav(p);
   const rs = {
     dash: rDash, profit: rProfit, exp: rExp, rep: rRep, tax: rVAT,
     sup: rSup, arc: rArc, srch: () => { document.getElementById('srNote').textContent=`نطاق البحث: عام ${getY()}`; },
     dl: rDL, set: rSet
   };
   if (rs[p]) rs[p]();
+  // عرض المسودة عند فتح صفحة المصروفات
+  if (p === 'exp') {
+    const draft = localStorage.getItem('inv_draft');
+    if (draft) {
+      try { const d = JSON.parse(draft); if (Object.values(d).some(v=>v)) document.getElementById('draftBanner').style.display='flex'; } catch(e){}
+    }
+    updateMonthlyInfo();
+  }
 }
 const onYC = () => go(curPage);
 const opSB = () => { document.getElementById('sb').classList.add('open'); document.getElementById('sbo').classList.add('on'); };
@@ -1231,6 +1271,50 @@ function backupData() {
   a.href = URL.createObjectURL(blob);
   a.download = `مقبض_نسخة_احتياطية_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
+}
+
+// ── حفظ واسترجاع المسودة ──
+function saveDraft() {
+  const d = {
+    num: document.getElementById('bn').value,
+    date: document.getElementById('bd').value,
+    supplier: document.getElementById('bs').value,
+    cat: document.getElementById('bc').value,
+    desc: document.getElementById('bds').value,
+    sub: document.getElementById('bsub').value
+  };
+  if (Object.values(d).some(v=>v)) localStorage.setItem('inv_draft', JSON.stringify(d));
+}
+function loadDraft() {
+  try {
+    const d = JSON.parse(localStorage.getItem('inv_draft')||'{}');
+    if (d.num) document.getElementById('bn').value = d.num;
+    if (d.date) document.getElementById('bd').value = d.date;
+    if (d.supplier) document.getElementById('bs').value = d.supplier;
+    if (d.cat) document.getElementById('bc').value = d.cat;
+    if (d.desc) document.getElementById('bds').value = d.desc;
+    if (d.sub) { document.getElementById('bsub').value = d.sub; calcB(); }
+    document.getElementById('draftBanner').style.display = 'none';
+  } catch(e) {}
+}
+function clearDraft() { localStorage.removeItem('inv_draft'); }
+
+function updateMonthlyInfo() {
+  const dt = document.getElementById('bd').value;
+  if (!dt) return;
+  const d = new Date(dt), m = d.getMonth(), y = d.getFullYear();
+  const list = gl(m, y);
+  const tot = list.reduce((s,i)=>s+i.total, 0);
+  const cnt = list.length;
+  const el = document.getElementById('monthlyInfo');
+  el.innerHTML = `<span>📅 ${MN[m]} ${y}</span><span>${cnt} فاتورة · إجمالي المصروفات: <b style="color:var(--b)">${fmt(tot)} ر.س</b></span>`;
+}
+
+// ── تحديث الشريط السفلي ──
+function updateBottomNav(page) {
+  document.querySelectorAll('#bnav .bni[id]').forEach(b => b.classList.remove('on'));
+  const el = document.getElementById('bn-'+page);
+  if (el) el.classList.add('on');
 }
 
 function rProfit() {
@@ -1543,6 +1627,16 @@ function exVAT(){
   row('إجمالي المشتريات',fmt(pS)+' ر.س');row('ضريبة المدخلات (خصم)',fmt(pT)+' ر.س',[5,150,105]);y2+=8;
   const isR=net<0;doc.setFillColor(isR?240:255,isR?253:241,isR?244:242);doc.rect(10,y2-6,W-20,20,'F');doc.setTextColor(isR?5:220,isR?150:38,isR?105:38);doc.setFontSize(11);doc.text(isR?'رصيد ضريبي لصالحك':'صافي الضريبة المستحقة للدفع',W-14,y2+6,{align:'right'});doc.setFontSize(18);doc.text(fmt(Math.abs(net))+' ر.س',14,y2+6,{align:'left'});
   doc.save(`اقرار_${q.l}_${y}.pdf`);
+}
+
+// ── Enter للحفظ في نموذج الفاتورة ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey && curPage === 'exp') { e.preventDefault(); savB(); }
+});
+
+// ── Service Worker (PWA) ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 </script>
 
