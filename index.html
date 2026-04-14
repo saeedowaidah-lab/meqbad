@@ -846,15 +846,26 @@ async function savB() {
   const dt = document.getElementById('bd').value;
   const sub = parseFloat(document.getElementById('bsub').value)||0;
   if (!dt || sub<=0) return alert('يرجى تحديد التاريخ والمبلغ');
-  const btn = document.getElementById('savBtn');
-  btn.disabled=true; btn.textContent='⏳ جارٍ الحفظ...';
+  const num = document.getElementById('bn').value.trim();
   const d = new Date(dt);
   const tax = parseFloat((sub*0.15).toFixed(2));
   const total = parseFloat((sub+tax).toFixed(2));
+
+  // كشف التكرار: نفس الرقم + التاريخ + المبلغ
+  if (num) {
+    const dup = invs.find(i => i.num && i.num === num && i.date === dt && Math.abs(i.total - total) < 0.1);
+    if (dup) {
+      const ok = confirm(`⚠️ فاتورة مكررة!\nرقم ${num} بتاريخ ${dt} ومبلغ ${fmt(total)} ر.س موجودة مسبقاً.\n\nهل تريد حفظها على أي حال؟`);
+      if (!ok) return;
+    }
+  }
+
+  const btn = document.getElementById('savBtn');
+  btn.disabled=true; btn.textContent='⏳ جارٍ الحفظ...';
   const id = Date.now();
   const row = {id, user_id:UID,
-    num:document.getElementById('bn').value.trim()||null,
-    date:dt, supplier:document.getElementById('bs').value.trim()||null,
+    num:num||null, date:dt,
+    supplier:document.getElementById('bs').value.trim()||null,
     cat:document.getElementById('bc').value,
     description:document.getElementById('bds').value.trim()||null,
     sub, tax, total, month:d.getMonth(), year:d.getFullYear()
@@ -862,7 +873,7 @@ async function savB() {
   try {
     await sbPost('invoices', row);
     invs.unshift({id, num:row.num||'', date:dt, supplier:row.supplier||'', cat:row.cat, desc:row.description||'', sub, tax, total, month:d.getMonth(), year:d.getFullYear()});
-    rstB(); selM=d.getMonth();
+    rstB(); setAI('','',''); selM=d.getMonth();
     const t=document.getElementById('bToast'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2500);
     rExp();
   } catch(e) { alert('خطأ: '+e.message); }
