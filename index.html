@@ -1031,7 +1031,7 @@ async function readAI() {
     alert('لا توجد صورة — ارفع صورة أو PDF أولاً');
     return;
   }
-  const apiKey = aiKey || localStorage.getItem('ai_key') || localStorage.getItem('gemini_key') || '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';
+  const apiKey = aiKey || localStorage.getItem('ai_key') || localStorage.getItem('gemini_key') || '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';
   if (!apiKey) {
     setAI('🔑', 'لم يتم ضبط مفتاح الذكاء الاصطناعي — تواصل مع المدير لإضافته من الإعدادات', 'err');
     return;
