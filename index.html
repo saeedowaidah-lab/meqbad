@@ -151,8 +151,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 .tbl td.to{font-weight:900;color:var(--b)}
 .tbl tfoot tr{background:linear-gradient(135deg,#eef4fb,#f0f5fc)}
 .tbl tfoot td{padding:10px 13px;font-weight:900;border-top:2px solid #b8cce8;font-size:13px}
-.dbtn{padding:3px 9px;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid #fecaca;background:#fff5f5;color:var(--r);font-family:inherit;transition:all .15s}
-.dbtn:hover{background:#fee2e2}
+.dbtn{padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid #fecaca;background:#fff5f5;color:var(--r);font-family:inherit;transition:all .15s;font-weight:700}
+.dbtn:hover{background:#fee2e2;transform:scale(1.04)}
+#undoBanner{display:none}
 
 /* ─── BADGE ─── */
 .badge{font-size:10.5px;padding:2px 9px;border-radius:5px;font-weight:700;white-space:nowrap;display:inline-block}
@@ -445,6 +446,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
         <div class="card"><div class="ch"><h3>🕐 أحدث الفواتير</h3><button class="btn sm" onclick="go('exp')">الكل ←</button></div><div class="cb np" id="dRec"></div></div>
         <div class="card"><div class="ch"><h3>🏆 أعلى الموردين</h3><button class="btn sm" onclick="go('sup')">الكل ←</button></div><div class="cb np" id="dSup"></div></div>
       </div>
+      <div id="dAlerts" style="margin-top:18px"></div>
     </div>
 
     <!-- PROFIT -->
@@ -507,6 +509,18 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
         <div class="cb" style="padding-top:14px">
           <div class="mtabs" id="eTabs"></div>
           <div class="bch" id="eBar" style="height:70px;margin-bottom:16px"></div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+            <input id="expSrch" placeholder="🔍 بحث بالمورد أو رقم الفاتورة..." oninput="expSearch=this.value;rExp()" style="flex:1;min-width:180px;padding:8px 12px;border:1.5px solid var(--bd);border-radius:9px;font-family:inherit;font-size:13px;outline:none;transition:.2s" onfocus="this.style.borderColor='var(--c2)'" onblur="this.style.borderColor='var(--bd)'">
+            <select id="expCat" onchange="expCatFilter=this.value;rExp()" style="padding:8px 12px;border:1.5px solid var(--bd);border-radius:9px;font-family:inherit;font-size:13px;outline:none;background:#fff;cursor:pointer">
+              <option value="">كل التصنيفات</option>
+              <option>مخزون وبضاعة</option><option>تسويق وإعلانات</option><option>شحن وتوصيل</option>
+              <option>إيجار</option><option>رواتب</option><option>كهرباء ومياه</option><option>صيانة</option><option>أخرى</option>
+            </select>
+          </div>
+          <div id="undoBanner" style="display:none;background:#1e40af;color:#fff;padding:10px 16px;border-radius:9px;margin-bottom:10px;display:none;align-items:center;justify-content:space-between;font-size:13px;font-weight:700">
+            <span>🗑 تم حذف الفاتورة</span>
+            <button onclick="undoDelete()" style="background:#fff;color:#1e40af;border:none;border-radius:7px;padding:4px 14px;font-family:inherit;font-size:12px;font-weight:900;cursor:pointer">↩ تراجع</button>
+          </div>
           <div class="tscr"><table class="tbl"><thead><tr><th>#</th><th>رقم الفاتورة</th><th>التاريخ</th><th>المورد</th><th>البيان</th><th>التصنيف</th><th>المبلغ</th><th>الضريبة</th><th>الإجمالي</th><th></th></tr></thead><tbody id="eBody"></tbody><tfoot id="eFoot"></tfoot></table></div>
           <div id="eSum" style="display:none"><div class="sum2" id="eSumG"></div></div>
         </div>
@@ -677,6 +691,8 @@ let curPage = 'dash';
 let srRes = null, sMI = null, sDI = null;
 let imgData = null, imgType = null;
 let aiKey = '';
+let expSearch = '', expCatFilter = '';
+let undoTimer = null, undoInv = null;
 
 // ══════════════════════════════════════════════
 // AUTH
@@ -881,10 +897,47 @@ async function savB() {
 }
 
 async function delI(id) {
-  if (!confirm('حذف هذه الفاتورة نهائياً؟')) return;
-  try { await sbDel('invoices', id); } catch(e) { alert('خطأ: '+e.message); return; }
+  const inv = invs.find(i => i.id === id);
+  if (!inv) return;
+  // حذف فوري مع إمكانية التراجع
   invs = invs.filter(i => i.id !== id);
+  undoInv = inv;
   rExp();
+  const banner = document.getElementById('undoBanner');
+  banner.style.display = 'flex';
+  if (undoTimer) clearTimeout(undoTimer);
+  undoTimer = setTimeout(async () => {
+    banner.style.display = 'none';
+    undoInv = null;
+    try { await sbDel('invoices', id); } catch(e) { console.warn('delI:', e); }
+  }, 6000);
+}
+
+async function undoDelete() {
+  if (!undoInv) return;
+  if (undoTimer) clearTimeout(undoTimer);
+  invs.unshift(undoInv);
+  undoInv = null;
+  document.getElementById('undoBanner').style.display = 'none';
+  rExp();
+}
+
+function editI(id) {
+  const inv = invs.find(i => i.id === id);
+  if (!inv) return;
+  go('exp');
+  document.getElementById('bn').value = inv.num || '';
+  document.getElementById('bd').value = inv.date;
+  document.getElementById('bs').value = inv.supplier || '';
+  document.getElementById('bds').value = inv.desc || '';
+  document.getElementById('bsub').value = inv.sub;
+  document.getElementById('bc').value = inv.cat;
+  calcB();
+  // حذف القديمة وتسجيل الجديدة عند الحفظ
+  invs = invs.filter(i => i.id !== id);
+  try { sbDel('invoices', id); } catch(e) {}
+  window.scrollTo({top: document.getElementById('page-exp').offsetTop - 70, behavior:'smooth'});
+  setAI('✏️', `تعديل الفاتورة — بعد التعديل اضغط حفظ`, 'ok');
 }
 
 async function savSd(y, m, v) {
@@ -1156,11 +1209,30 @@ function rDash() {
   document.getElementById('dSup').innerHTML = Object.entries(sup).sort((a,b)=>b[1].total-a[1].total).slice(0,6).map(([n,d]) =>
     `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 18px;border-bottom:1px solid #f5f8fa"><div style="font-weight:800;color:var(--c2);font-size:13px">${n}<span style="font-size:11px;color:var(--mu2);font-weight:500;margin-right:5px">(${d.cnt})</span></div><span style="font-weight:900;color:var(--b)">${fmt(d.total)}</span></div>`
   ).join('');
+  // تنبيهات ذكية
+  const alerts = [];
+  const now = new Date(), nm = now.getMonth(), nd = now.getDate();
+  const vatDeadlines = [{q:[0,1,2],dl:'30 أبريل',m:3},{q:[3,4,5],dl:'31 يوليو',m:6},{q:[6,7,8],dl:'31 أكتوبر',m:9},{q:[9,10,11],dl:'31 يناير',m:0}];
+  vatDeadlines.forEach(v => {
+    const near = v.q.includes(nm) && (nm === v.q[2]) && nd >= 15;
+    const passed = (nm === v.m && nd <= 30);
+    if (near || passed) alerts.push(`<div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:#92400e">⏰ تذكير: موعد إقرار ضريبة القيمة المضافة في <b>${v.dl}</b> — تأكد من رفع الإقرار في هيئة الزكاة</div>`);
+  });
+  if (yi.length === 0) alerts.push(`<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:#1e40af">💡 لم يتم إضافة أي فاتورة لعام ${y} بعد — ابدأ بإضافة الفواتير من تبويب المصروفات</div>`);
+  document.getElementById('dAlerts').innerHTML = alerts.length ? `<div style="display:flex;flex-direction:column;gap:10px">${alerts.join('')}<div style="display:flex;justify-content:flex-end"><button class="btn sm" onclick="backupData()" style="font-size:12px">💾 تصدير نسخة احتياطية</button></div></div>` : `<div style="display:flex;justify-content:flex-end"><button class="btn sm" onclick="backupData()" style="font-size:12px">💾 تصدير نسخة احتياطية</button></div>`;
 }
 
 // ══════════════════════════════════════════════
 // PROFIT
 // ══════════════════════════════════════════════
+function backupData() {
+  const blob = new Blob([JSON.stringify({invoices:invs, sales:sdata, exported: new Date().toISOString()}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `مقبض_نسخة_احتياطية_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
 function rProfit() {
   const y = getY(), yi = invs.filter(i=>i.year===y);
   const active = [...new Set(yi.map(i=>i.month))].sort((a,b)=>a-b);
@@ -1203,11 +1275,17 @@ function rExp() {
   document.getElementById('eBar').innerHTML = data.map(d =>
     `<div class="bcol" onclick="selM=${d.i};rExp()"><div class="bval">${d.t>0?Math.round(d.t/1000)+'k':''}</div><div class="bf ${d.i===selM?'act':''}" style="height:${Math.max(3,Math.round(d.t/mx*64))}px"></div><div class="blbl">${MN[d.i].slice(0,3)}</div></div>`
   ).join('');
-  const list = gl(selM,y).sort((a,b)=>a.date.localeCompare(b.date));
-  document.getElementById('eCnt').textContent = `${list.length} فاتورة`;
+  let list = gl(selM,y).sort((a,b)=>a.date.localeCompare(b.date));
+  if (expSearch) {
+    const q = expSearch.toLowerCase();
+    list = list.filter(i => (i.supplier||'').toLowerCase().includes(q) || (i.num||'').toLowerCase().includes(q) || (i.desc||'').toLowerCase().includes(q));
+  }
+  if (expCatFilter) list = list.filter(i => i.cat === expCatFilter);
+  const allList = gl(selM,y);
+  document.getElementById('eCnt').textContent = list.length < allList.length ? `${list.length} من ${allList.length} فاتورة` : `${list.length} فاتورة`;
   document.getElementById('eBody').innerHTML = list.length ? list.map((inv,i) =>
-    `<tr><td class="mu">${i+1}</td><td class="mu">${inv.num||'—'}</td><td class="mu">${inv.date}</td><td class="su">${inv.supplier||'—'}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555" title="${(inv.desc||'').replace(/"/g,'')}">${inv.desc||'—'}</td><td><span class="badge ${cc(inv.cat)}">${inv.cat}</span></td><td style="font-weight:700">${fmt(inv.sub)}</td><td class="tx">${fmt(inv.tax)}</td><td class="to">${fmt(inv.total)}</td><td><button class="dbtn" onclick="delI(${inv.id})">حذف</button></td></tr>`
-  ).join('') : '<tr><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--mu)">لا توجد فواتير لهذا الشهر</td></tr>';
+    `<tr><td class="mu">${i+1}</td><td class="mu">${inv.num||'—'}</td><td class="mu">${inv.date}</td><td class="su">${inv.supplier||'—'}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555" title="${(inv.desc||'').replace(/"/g,'')}">${inv.desc||'—'}</td><td><span class="badge ${cc(inv.cat)}">${inv.cat}</span></td><td style="font-weight:700">${fmt(inv.sub)}</td><td class="tx">${fmt(inv.tax)}</td><td class="to">${fmt(inv.total)}</td><td style="white-space:nowrap"><button class="dbtn" style="background:#eff6ff;color:#1e40af;border-color:#bfdbfe;margin-left:4px" onclick="editI(${inv.id})">تعديل</button><button class="dbtn" onclick="delI(${inv.id})">حذف</button></td></tr>`
+  ).join('') : `<tr><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--mu)">${expSearch||expCatFilter?'لا توجد نتائج مطابقة':'لا توجد فواتير لهذا الشهر'}</td></tr>`;
   const tS=list.reduce((s,i)=>s+i.sub,0), tT=list.reduce((s,i)=>s+i.tax,0), tA=list.reduce((s,i)=>s+i.total,0);
   document.getElementById('eFoot').innerHTML = list.length ?
     `<tr><td colspan="6" style="text-align:right;font-weight:900">إجمالي ${list.length} فاتورة</td><td style="font-weight:900">${fmt(tS)}</td><td style="color:var(--r);font-weight:900">${fmt(tT)}</td><td style="color:var(--b);font-weight:900">${fmt(tA)}</td><td></td></tr>` : '';
