@@ -2239,9 +2239,38 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.ctrlKey && curPage === 'exp') { e.preventDefault(); savB(); }
 });
 
-// ── Service Worker (PWA) ──
+// ── Service Worker (PWA) — مع تحديث تلقائي ──
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    // عند اكتشاف SW جديد
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      newSW.addEventListener('statechange', () => {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          // أظهر إشعار التحديث
+          showUpdateBanner();
+        }
+      });
+    });
+    // تحقق دورياً كل 5 دقائق من وجود تحديث
+    setInterval(() => reg.update(), 5 * 60 * 1000);
+  }).catch(() => {});
+
+  // عند تفعيل SW الجديد — أعد التحميل تلقائياً
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) { refreshing = true; window.location.reload(); }
+  });
+}
+
+function showUpdateBanner() {
+  const old = document.getElementById('_updBanner');
+  if (old) return;
+  const b = document.createElement('div');
+  b.id = '_updBanner';
+  b.style.cssText = 'position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:#1a3c5e;color:#fff;padding:12px 20px;border-radius:14px;font-size:13px;font-weight:700;z-index:99999;display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.35);font-family:Tajawal,sans-serif;white-space:nowrap';
+  b.innerHTML = '<span>🔄 يوجد تحديث جديد للتطبيق</span><button onclick="navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage(\'skipWaiting\')" style="background:#f59e0b;color:#000;border:none;border-radius:8px;padding:7px 16px;font-weight:900;cursor:pointer;font-family:inherit;font-size:12px">تحديث الآن</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;padding:0 4px">✕</button>';
+  document.body.appendChild(b);
 }
 
 // ── شاشة الترحيب لطلب اسم الموظف ──
