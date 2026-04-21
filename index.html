@@ -334,6 +334,20 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 .sgv{font-weight:800;color:var(--c2)}
 .sgv.r{color:var(--r)}.sgv.b{color:var(--b)}.sgv.g{color:var(--g)}
 
+/* ─── PRINT MODAL ─── */
+#qtPrintModal{position:fixed;inset:0;z-index:99998;background:#f1f5f9;overflow-y:auto;display:none}
+.qtpm-bar{position:sticky;top:0;z-index:9;background:#07111f;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.qtpm-bar h3{color:#fff;font-size:14px;font-weight:700;flex:1}
+.qtpm-pbtn{background:#f59e0b;color:#000;border:none;border-radius:9px;padding:10px 22px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit}
+.qtpm-cbtn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:9px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+#qtPrintContent{max-width:794px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+@media print{
+  body>*:not(#qtPrintModal){display:none!important}
+  #qtPrintModal{position:static!important;background:#fff!important;overflow:visible!important}
+  .qtpm-bar{display:none!important}
+  #qtPrintContent{margin:0!important;border-radius:0!important;box-shadow:none!important;max-width:100%!important}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
 /* ─── BOTTOM NAV (mobile) ─── */
 #bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid var(--bd);z-index:500;padding:6px 0 max(6px,env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.08)}
 .bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;color:var(--mu2);font-size:9.5px;font-weight:800;transition:all .15s;border:none;background:none;font-family:inherit}
@@ -731,7 +745,19 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
             <!-- Summary -->
             <div class="qt-sum-wrap">
               <div class="qt-sum-card">
-                <div class="qt-sr"><span class="sl">الاجمالي قبل الضريبة</span><span class="sv" id="qtSubtotal">0.00 ر.س</span></div>
+                <div class="qt-sr"><span class="sl">الاجمالي قبل الخصم</span><span class="sv" id="qtSubtotal">0.00 ر.س</span></div>
+                <div class="qt-sr" style="align-items:center;gap:8px">
+                  <span class="sl">خصم / Discount</span>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <select id="qtDiscType" onchange="calcQ()" style="border:1.5px solid #fde68a;background:#fefce8;border-radius:7px;padding:5px 8px;font-family:inherit;font-size:12px;font-weight:700;outline:none;cursor:pointer;color:#92400e">
+                      <option value="amount">ر.س ثابت</option>
+                      <option value="percent">نسبة %</option>
+                    </select>
+                    <input type="number" id="qtDiscount" min="0" step="0.01" placeholder="0" oninput="calcQ()" style="width:80px;border:1.5px solid #fde68a;background:#fff;border-radius:7px;padding:6px 8px;font-size:14px;font-weight:900;text-align:center;font-family:inherit;outline:none">
+                  </div>
+                </div>
+                <div class="qt-sr" id="qtDiscRow" style="display:none"><span class="sl">قيمة الخصم</span><span class="sv" id="qtDiscAmt" style="color:#dc2626">0.00 ر.س</span></div>
+                <div class="qt-sr"><span class="sl">المبلغ الخاضع للضريبة</span><span class="sv" id="qtTaxable" style="color:#0f172a">0.00 ر.س</span></div>
                 <div class="qt-sr"><span class="sl">الضريبة 15% VAT</span><span class="sv" id="qtVAT" style="color:#dc2626">0.00 ر.س</span></div>
                 <div class="qt-sr"><span class="sl">الاجمالي النهائي</span><span class="sv" id="qtGrand">0.00 ر.س</span></div>
               </div>
@@ -2023,14 +2049,24 @@ function calcQ() {
     if(es) es.textContent = fmt(sub);
     if(ev) ev.textContent = fmt(wVat);
   });
-  const vat   = subtotal * 0.15;
-  const grand = subtotal + vat;
-  const el1 = document.getElementById('qtSubtotal');
-  const el2 = document.getElementById('qtVAT');
-  const el3 = document.getElementById('qtGrand');
-  if(el1) el1.textContent = fmt(subtotal) + ' ر.س';
-  if(el2) el2.textContent = fmt(vat) + ' ر.س';
-  if(el3) el3.textContent = fmt(grand) + ' ر.س';
+  // Discount
+  const discType = document.getElementById('qtDiscType')?.value || 'amount';
+  const discVal  = parseFloat(document.getElementById('qtDiscount')?.value) || 0;
+  const discount = discType === 'percent'
+    ? subtotal * (Math.min(discVal, 100) / 100)
+    : Math.min(discVal, subtotal);
+  const taxable  = subtotal - discount;
+  const vat      = taxable * 0.15;
+  const grand    = taxable + vat;
+  // Show/hide discount row
+  const discRow = document.getElementById('qtDiscRow');
+  if(discRow) discRow.style.display = discount > 0 ? 'flex' : 'none';
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = fmt(val) + ' ر.س'; };
+  set('qtSubtotal', subtotal);
+  set('qtDiscAmt',  discount);
+  set('qtTaxable',  taxable);
+  set('qtVAT',      vat);
+  set('qtGrand',    grand);
 }
 
 function savQ() {
@@ -2039,13 +2075,12 @@ function savQ() {
   const customer = document.getElementById('qtCustomer').value.trim();
   if (!num||!date)  { alert('يرجى ملء رقم العرض والتاريخ'); return; }
   if (!customer)    { alert('يرجى كتابة اسم العميل'); return; }
-  const items = qItems.filter(i => i.desc || i.price)
-    .map(i => ({ desc:i.desc, qty:i.qty||1, price:i.price||0, sub:(i.qty||1)*(i.price||0), withVat:(i.qty||1)*(i.price||0)*1.15 }));
-  if (!items.length){ alert('يرجى إضافة بند واحد على الأقل'); return; }
-  const subtotal   = items.reduce((s,i)=>s+i.sub, 0);
-  const vat        = subtotal * 0.15;
-  const grandTotal = subtotal + vat;
-  const q = { id: qEditId||Date.now().toString(), num, date, customer, items, subtotal, vat, grandTotal, created: new Date().toISOString() };
+  const d = buildQFromForm();
+  if (!d.items.length){ alert('يرجى إضافة بند واحد على الأقل'); return; }
+  const q = { id: qEditId||Date.now().toString(), num, date, customer,
+    items: d.items, subtotal: d.subtotal, discount: d.discount, discType: d.discType,
+    discVal: d.discVal, discLabel: d.discLabel, taxable: d.taxable,
+    vat: d.vat, grandTotal: d.grandTotal, created: new Date().toISOString() };
   if (qEditId) {
     const idx = quotes.findIndex(x => x.id===qEditId);
     if(idx!==-1) quotes[idx]=q; else quotes.unshift(q);
@@ -2066,6 +2101,8 @@ function rstQ() {
   document.getElementById('qtNum').value = genQNum();
   document.getElementById('qtDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('qtCustomer').value = '';
+  const dd = document.getElementById('qtDiscount'); if(dd) dd.value = '';
+  const dt = document.getElementById('qtDiscType'); if(dt) dt.value = 'amount';
   addQItem(); addQItem(); addQItem();
   renderQItems(); calcQ();
   document.getElementById('qtFormTitle').textContent   = '📋 إنشاء عرض سعر جديد';
@@ -2078,6 +2115,8 @@ function editQ(id) {
   document.getElementById('qtNum').value = q.num;
   document.getElementById('qtDate').value = q.date;
   document.getElementById('qtCustomer').value = q.customer;
+  const dt = document.getElementById('qtDiscType'); if(dt) dt.value = q.discType||'amount';
+  const dd = document.getElementById('qtDiscount'); if(dd) dd.value = q.discVal||'';
   (q.items||[]).forEach(i => qItems.push({ id: qNextId++, desc:i.desc, qty:i.qty, price:i.price }));
   renderQItems(); calcQ();
   document.getElementById('qtFormTitle').textContent   = '✏ تعديل عرض السعر';
@@ -2098,13 +2137,18 @@ function delQ(id) {
 function buildQFromForm() {
   const items = qItems.filter(i=>i.desc||i.price)
     .map(i=>({ desc:i.desc, qty:i.qty||1, price:i.price||0, sub:(i.qty||1)*(i.price||0), withVat:(i.qty||1)*(i.price||0)*1.15 }));
-  const subtotal = items.reduce((s,i)=>s+i.sub,0);
-  const vat      = subtotal * 0.15;
+  const subtotal   = items.reduce((s,i)=>s+i.sub,0);
+  const discType   = document.getElementById('qtDiscType')?.value || 'amount';
+  const discVal    = parseFloat(document.getElementById('qtDiscount')?.value) || 0;
+  const discount   = discType==='percent' ? subtotal*(Math.min(discVal,100)/100) : Math.min(discVal,subtotal);
+  const discLabel  = discType==='percent' ? `${discVal}%` : '';
+  const taxable    = subtotal - discount;
+  const vat        = taxable * 0.15;
   return {
     num     : document.getElementById('qtNum').value || genQNum(),
     date    : document.getElementById('qtDate').value,
     customer: document.getElementById('qtCustomer').value || '...',
-    items, subtotal, vat, grandTotal: subtotal+vat
+    items, subtotal, discount, discType, discVal, discLabel, taxable, vat, grandTotal: taxable+vat
   };
 }
 
@@ -2117,137 +2161,104 @@ function previewQ(id) {
 
 function openQPrintWindow(q) {
   const items = (q.items||[]).filter(i=>i.desc||i.price);
-  const fmtN = v => Number(v||0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const rows = items.map((it,i)=>`
+  const fmtN  = v => Number(v||0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const rows  = items.map((it,i)=>`
     <tr>
       <td>${i+1}</td>
-      <td class="desc">${it.desc||'—'}</td>
+      <td class="qdesc">${it.desc||'—'}</td>
       <td>${it.qty||1}</td>
       <td>${fmtN(it.price)}</td>
       <td>${fmtN(it.sub)}</td>
       <td>${fmtN((it.sub||0)*1.15)}</td>
     </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px">لا توجد بنود</td></tr>';
 
-  const html = `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>عرض سعر ${q.num||''} — ${q.customer||''}</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Tajawal',sans-serif;direction:rtl;color:#0f172a;background:#f1f5f9;font-size:14px}
-.pbar{background:#07111f;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:99}
-.pbar h3{color:#fff;font-size:14px;font-weight:700}
-.pbtn{background:#f59e0b;color:#000;border:none;border-radius:9px;padding:9px 22px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit}
-.pcls{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
-.doc{max-width:210mm;margin:20px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15)}
-.hdr{background:#f59e0b;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-.co-info h2{font-size:17px;font-weight:900;color:#000;margin-bottom:6px}
-.co-info p{font-size:10.5px;color:rgba(0,0,0,.72);line-height:2}
-.lgbox{background:#07111f;border-radius:12px;padding:12px 20px;text-align:center;min-width:90px;flex-shrink:0}
-.lg-en{color:#f59e0b;font-size:22px;font-weight:900;display:block}
-.lg-ar{color:rgba(255,255,255,.4);font-size:11px;display:block;margin-top:3px}
-.tband{background:#07111f;padding:13px;text-align:center;color:#f59e0b;font-size:15px;font-weight:900}
-.metarow{display:flex;gap:10px;padding:18px 22px;flex-wrap:wrap}
-.mbox{flex:1;min-width:120px;border:2px solid #f59e0b;border-radius:10px;padding:10px 14px;text-align:center;background:#fefce8}
-.mlbl{font-size:9.5px;color:#92400e;font-weight:900;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
-.mval{font-size:15px;font-weight:900;color:#07111f;display:block}
-.custbox{background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;margin:0 22px 18px;padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.clbl{font-size:12px;font-weight:900;color:#1e40af;white-space:nowrap}
-.cval{font-size:17px;font-weight:900;color:#07111f}
-.twrap{margin:0 22px 4px;overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:480px}
-thead th{background:#f59e0b;color:#000;padding:11px 9px;font-size:12px;font-weight:900;border:1px solid #d97706;text-align:center}
-th.desc{text-align:right}
-tbody td{padding:10px 9px;border:1px solid #e5e7eb;font-size:13px;text-align:center;vertical-align:middle}
-td.desc{text-align:right;font-weight:600}
-tbody tr:nth-child(even){background:#fffbeb}
-.totwrap{display:flex;justify-content:flex-end;padding:18px 22px 4px}
-.totbox{border:2px solid #f59e0b;border-radius:12px;padding:16px 22px;min-width:270px;background:#fefce8}
-.trow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #fde68a;font-size:13px;gap:24px}
-.trow:last-child{border-bottom:none;border-top:2px solid #f59e0b;padding-top:13px;margin-top:5px;font-size:16px;font-weight:900}
-.tl{color:#64748b;font-weight:700}.tv{font-weight:900;color:#1e40af}
-.trow:last-child .tv{color:#92400e;font-size:19px}
-.bankbox{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;margin:18px 22px;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:12px;color:#64748b}
-.ftr{background:#07111f;padding:13px;text-align:center;color:#f59e0b;font-size:11.5px;margin-top:4px}
-@media print{
-  .pbar{display:none!important}
-  body{background:#fff}
-  .doc{margin:0;border-radius:0;box-shadow:none;max-width:100%}
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-}
-@media(max-width:600px){
-  .metarow{gap:8px}
-  .totwrap{padding:14px 16px 4px}
-  .totbox{min-width:0;width:100%}
-  .hdr{padding:16px}
-  .co-info h2{font-size:14px}
-  .twrap{margin:0 12px 4px}
-  .custbox,.bankbox{margin-left:12px;margin-right:12px}
-}
-</style>
-</head>
-<body>
-<div class="pbar">
-  <h3>👁 معاينة عرض السعر #${q.num||''} — ${q.customer||''}</h3>
-  <div style="display:flex;gap:8px">
-    <button class="pbtn" onclick="window.print()">🖨 طباعة / حفظ PDF</button>
-    <button class="pcls" onclick="window.close()">✕ إغلاق</button>
-  </div>
-</div>
-<div class="doc">
-  <div class="hdr">
-    <div class="co-info">
-      <h2>مؤسسة المقبض الاسود التجارية</h2>
-      <p>الرقم الضريبي: 302210041700003 &nbsp;|&nbsp; السجل التجاري: 1009151735<br>
-      العنوان: 350، الرياض، المملكة العربية السعودية - 12694<br>
-      Tel: 966 53 223 6848 &nbsp;|&nbsp; info@meqbad.com &nbsp;|&nbsp; meqbad.com</p>
-    </div>
-    <div class="lgbox"><span class="lg-en">Meqbad</span><span class="lg-ar">مقبض</span></div>
-  </div>
-  <div class="tband">عرض سعر &nbsp;/&nbsp; Price Quote</div>
-  <div class="metarow">
-    <div class="mbox"><span class="mlbl">رقم العرض / Quote No.</span><span class="mval">${q.num||'—'}</span></div>
-    <div class="mbox"><span class="mlbl">تاريخ الإصدار / Date</span><span class="mval">${q.date||'—'}</span></div>
-    <div class="mbox"><span class="mlbl">الصلاحية / Valid</span><span class="mval">7 أيام / Days</span></div>
-  </div>
-  <div class="custbox">
-    <span class="clbl">👤 المرسل إليه / To:</span>
-    <span class="cval">${q.customer||'...'}</span>
-  </div>
-  <div class="twrap">
-    <table>
-      <thead><tr>
-        <th style="width:6%">#</th>
-        <th class="desc" style="width:36%">وصف الخدمة / السلعة<br><small style="font-weight:600;opacity:.8">Description</small></th>
-        <th style="width:10%">الكمية<br><small style="font-weight:600;opacity:.8">Qty</small></th>
-        <th style="width:14%">السعر<br><small style="font-weight:600;opacity:.8">Price</small></th>
-        <th style="width:17%">إجمالي التكلفة<br><small style="font-weight:600;opacity:.8">Total Cost</small></th>
-        <th style="width:17%">مع الضريبة 15%<br><small style="font-weight:600;opacity:.8">With VAT</small></th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>
-  <div class="totwrap">
-    <div class="totbox">
-      <div class="trow"><span class="tl">الاجمالي قبل الضريبة</span><span class="tv">${fmtN(q.subtotal)} ر.س</span></div>
-      <div class="trow"><span class="tl">الضريبة 15% VAT</span><span class="tv" style="color:#dc2626">${fmtN(q.vat)} ر.س</span></div>
-      <div class="trow"><span class="tl">الاجمالي النهائي</span><span class="tv">${fmtN(q.grandTotal)} ر.س</span></div>
-    </div>
-  </div>
-  <div class="bankbox">
-    <span>🏦 <strong style="color:#0f172a">الحساب البنكي:</strong> SA0580000510608016264429</span>
-    <strong style="color:#0f172a">بنك الراجحي / Al Rajhi Bank</strong>
-  </div>
-  <div class="ftr">meqbad.com &nbsp;|&nbsp; info@meqbad.com &nbsp;|&nbsp; +966 53 223 6848</div>
-</div>
-</body></html>`;
+  const discRow = (q.discount && q.discount > 0) ? `
+    <div class="qtrow"><span class="qtl">خصم${q.discLabel?' ('+q.discLabel+')':''}</span><span class="qtv" style="color:#dc2626">- ${fmtN(q.discount)} ر.س</span></div>
+    <div class="qtrow"><span class="qtl">المبلغ الخاضع للضريبة</span><span class="qtv">${fmtN(q.taxable||q.subtotal)} ر.س</span></div>` : '';
 
-  const w = window.open('', '_blank', 'width=900,height=700');
-  if(w){ w.document.write(html); w.document.close(); }
-  else  alert('يرجى السماح بفتح نوافذ منبثقة في المتصفح');
+  document.getElementById('qtPrintTitle').textContent = `👁 عرض السعر #${q.num||''} — ${q.customer||''}`;
+  document.getElementById('qtPrintContent').innerHTML = `
+<style>
+#qtPrintContent *{box-sizing:border-box;margin:0;padding:0;font-family:'Tajawal',sans-serif}
+.qhdr{background:#f59e0b;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.qco h2{font-size:17px;font-weight:900;color:#000;margin-bottom:5px}
+.qco p{font-size:10.5px;color:rgba(0,0,0,.72);line-height:1.9}
+.qlg{background:#07111f;border-radius:11px;padding:11px 18px;text-align:center;min-width:88px;flex-shrink:0}
+.qlge{color:#f59e0b;font-size:20px;font-weight:900;display:block}
+.qlga{color:rgba(255,255,255,.4);font-size:10px;display:block;margin-top:2px}
+.qtband{background:#07111f;padding:12px;text-align:center;color:#f59e0b;font-size:15px;font-weight:900}
+.qmeta{display:flex;gap:10px;padding:16px 22px;flex-wrap:wrap}
+.qmb{flex:1;min-width:110px;border:2px solid #f59e0b;border-radius:9px;padding:9px 12px;text-align:center;background:#fefce8}
+.qmbl{font-size:9px;color:#92400e;font-weight:900;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
+.qmbv{font-size:14px;font-weight:900;color:#07111f;display:block}
+.qcust{background:#eff6ff;border:1.5px solid #93c5fd;border-radius:9px;margin:0 22px 16px;padding:11px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qcl{font-size:11.5px;font-weight:900;color:#1e40af;white-space:nowrap}
+.qcv{font-size:16px;font-weight:900;color:#07111f}
+.qtwrap{margin:0 22px;overflow-x:auto}
+.qtwrap table{width:100%;border-collapse:collapse;min-width:460px}
+.qtwrap thead th{background:#f59e0b;color:#000;padding:10px 8px;font-size:11.5px;font-weight:900;border:1px solid #d97706;text-align:center}
+.qtwrap th.qdesc,.qtwrap td.qdesc{text-align:right}
+.qtwrap tbody td{padding:9px 8px;border:1px solid #e5e7eb;font-size:12.5px;text-align:center;vertical-align:middle}
+.qtwrap tbody td.qdesc{font-weight:600}
+.qtwrap tbody tr:nth-child(even){background:#fffbeb}
+.qtots{display:flex;justify-content:flex-end;padding:16px 22px 4px}
+.qtotb{border:2px solid #f59e0b;border-radius:11px;padding:14px 20px;min-width:265px;background:#fefce8}
+.qtrow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #fde68a;font-size:13px;gap:22px;direction:rtl}
+.qtrow:last-child{border-bottom:none;border-top:2px solid #f59e0b;padding-top:12px;margin-top:4px;font-size:15px;font-weight:900}
+.qtl{color:#64748b;font-weight:700}.qtv{font-weight:900;color:#1e40af}
+.qtrow:last-child .qtv{color:#92400e;font-size:18px}
+.qbank{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:9px;margin:16px 22px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;color:#64748b;direction:rtl}
+.qftr{background:#07111f;padding:11px;text-align:center;color:#f59e0b;font-size:11px;margin-top:4px}
+</style>
+<div class="qhdr">
+  <div class="qco">
+    <h2>مؤسسة المقبض الاسود التجارية</h2>
+    <p>الرقم الضريبي: 302210041700003 &nbsp;|&nbsp; السجل التجاري: 1009151735<br>
+    350، الرياض، المملكة العربية السعودية - 12694 &nbsp;|&nbsp; Tel: 966 53 223 6848<br>
+    info@meqbad.com &nbsp;|&nbsp; meqbad.com</p>
+  </div>
+  <div class="qlg"><span class="qlge">Meqbad</span><span class="qlga">مقبض</span></div>
+</div>
+<div class="qtband">عرض سعر &nbsp;/&nbsp; Price Quote</div>
+<div class="qmeta">
+  <div class="qmb"><span class="qmbl">رقم العرض / Quote No.</span><span class="qmbv">${q.num||'—'}</span></div>
+  <div class="qmb"><span class="qmbl">تاريخ الإصدار / Date</span><span class="qmbv">${q.date||'—'}</span></div>
+  <div class="qmb"><span class="qmbl">الصلاحية / Valid</span><span class="qmbv">7 أيام / Days</span></div>
+</div>
+<div class="qcust">
+  <span class="qcl">👤 المرسل إليه / To:</span>
+  <span class="qcv">${q.customer||'...'}</span>
+</div>
+<div class="qtwrap">
+  <table>
+    <thead><tr>
+      <th style="width:6%">#</th>
+      <th class="qdesc" style="width:36%">وصف الخدمة / السلعة<br><small style="font-weight:600;opacity:.8">Description</small></th>
+      <th style="width:10%">الكمية<br><small style="font-weight:600;opacity:.8">Qty</small></th>
+      <th style="width:14%">السعر<br><small style="font-weight:600;opacity:.8">Price</small></th>
+      <th style="width:17%">إجمالي التكلفة<br><small style="font-weight:600;opacity:.8">Total Cost</small></th>
+      <th style="width:17%">مع الضريبة 15%<br><small style="font-weight:600;opacity:.8">With VAT</small></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>
+<div class="qtots">
+  <div class="qtotb">
+    <div class="qtrow"><span class="qtl">الاجمالي قبل الخصم</span><span class="qtv">${fmtN(q.subtotal)} ر.س</span></div>
+    ${discRow}
+    <div class="qtrow"><span class="qtl">الضريبة 15% VAT</span><span class="qtv" style="color:#dc2626">${fmtN(q.vat)} ر.س</span></div>
+    <div class="qtrow"><span class="qtl">الاجمالي النهائي</span><span class="qtv">${fmtN(q.grandTotal)} ر.س</span></div>
+  </div>
+</div>
+<div class="qbank">
+  <span>🏦 <strong style="color:#0f172a">الحساب البنكي:</strong> SA0580000510608016264429</span>
+  <strong style="color:#0f172a">بنك الراجحي / Al Rajhi Bank</strong>
+</div>
+<div class="qftr">meqbad.com &nbsp;|&nbsp; info@meqbad.com &nbsp;|&nbsp; +966 53 223 6848</div>`;
+
+  const modal = document.getElementById('qtPrintModal');
+  modal.style.display = 'block';
+  modal.scrollTop = 0;
 }
 
 // ── Render saved list ──
@@ -2371,6 +2382,18 @@ function askEmployeeName() {
   });
 }
 </script>
+
+<!-- معاينة عرض السعر / Print Modal -->
+<div id="qtPrintModal">
+  <div class="qtpm-bar">
+    <h3 id="qtPrintTitle">👁 معاينة عرض السعر</h3>
+    <div style="display:flex;gap:8px">
+      <button class="qtpm-pbtn" onclick="window.print()">🖨 طباعة / حفظ PDF</button>
+      <button class="qtpm-cbtn" onclick="document.getElementById('qtPrintModal').style.display='none'">✕ إغلاق</button>
+    </div>
+  </div>
+  <div id="qtPrintContent"></div>
+</div>
 
 <!-- شاشة إدخال اسم الموظف -->
 <div id="empModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(7,17,31,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem">
