@@ -1,4 +1,4 @@
-const CACHE = 'meqbad-v1';
+const CACHE = 'meqbad-v2';
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', e => {

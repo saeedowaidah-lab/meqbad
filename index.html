@@ -344,6 +344,45 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 /* ─── DRAFT BANNER ─── */
 #draftBanner{display:none;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px;align-items:center;justify-content:space-between;gap:10px}
 
+/* ─── PRICE QUOTE ─── */
+.qt-hdr{background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:20px 24px;color:#000;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.qt-logo-box{background:var(--c0);border-radius:11px;padding:10px 18px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:90px}
+.qt-logo-box .qtl-en{color:var(--ac);font-size:17px;font-weight:900;font-family:'Tajawal',sans-serif}
+.qt-logo-box .qtl-ar{color:rgba(255,255,255,.5);font-size:9px;font-weight:600;margin-top:2px}
+.qt-co-info{text-align:right;flex:1}
+.qt-co-info h4{font-size:15px;font-weight:900;color:#000;margin-bottom:5px}
+.qt-co-info p{font-size:10.5px;color:rgba(0,0,0,.7);line-height:1.8}
+.qt-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.qt-meta-box{flex:1;min-width:110px;background:#fef9c3;border:1.5px solid var(--ac);border-radius:9px;padding:8px 14px;text-align:center}
+.qt-meta-box .qtm-l{font-size:9.5px;color:#92400e;font-weight:900;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.qt-meta-box input,.qt-meta-box .qtm-v{font-size:13px;font-weight:900;color:var(--c0);width:100%;border:none;background:transparent;text-align:center;font-family:inherit;outline:none}
+.qt-cust{background:#eff6ff;border:1.5px solid #93c5fd;border-radius:9px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.qt-cust label{font-size:11px;font-weight:900;color:#1e40af;white-space:nowrap}
+.qt-cust input{flex:1;border:none;background:transparent;font-size:14px;font-weight:700;color:var(--tx);font-family:inherit;outline:none}
+.qt-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.qt-tbl thead th{background:var(--ac);color:#000;padding:9px 12px;text-align:center;font-weight:900;font-size:12px;border:1px solid #d97706}
+.qt-tbl thead th:first-child{text-align:right}
+.qt-tbl tbody td{padding:7px 10px;border:1px solid #e5e7eb;text-align:center;vertical-align:middle}
+.qt-tbl tbody td:first-child{text-align:right}
+.qt-tbl tbody tr:nth-child(even){background:#fffbeb}
+.qt-tbl tbody tr:hover{background:#fef9c3}
+.qt-tbl input[type=text],.qt-tbl input:not([type=number]){width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;background:#fff;outline:none;transition:.15s}
+.qt-tbl input[type=number]{width:75px;border:1px solid #e2e8f0;border-radius:6px;padding:5px 7px;font-size:12px;font-family:inherit;background:#fff;outline:none;text-align:center;transition:.15s}
+.qt-tbl input:focus{border-color:var(--c3);box-shadow:0 0 0 2px rgba(37,99,168,.08)}
+.qt-calc{font-weight:800;color:var(--c2)}
+.qt-calc-vat{font-weight:800;color:var(--b)}
+.qt-sum{display:flex;justify-content:flex-end;margin-top:16px}
+.qt-sum-box{background:#fefce8;border:2px solid var(--ac);border-radius:12px;padding:14px 22px;min-width:270px}
+.qt-srow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #fde68a;font-size:13px;gap:20px}
+.qt-srow:last-child{border-bottom:none;font-size:15px;font-weight:900;padding-top:10px;margin-top:4px;border-top:2px solid var(--ac)}
+.qt-sl{color:var(--mu);font-weight:700}.qt-sv{font-weight:900;color:var(--c2)}
+.qt-srow:last-child .qt-sv{color:#92400e;font-size:16px}
+.qt-bank{background:#f8fafc;border:1.5px solid var(--bd);border-radius:10px;padding:11px 18px;margin-top:14px;font-size:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;color:var(--mu)}
+.qt-bank strong{color:var(--tx);font-weight:900}
+.qt-saved-card{background:#fff;border-radius:11px;border:1.5px solid var(--bd);padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:var(--s1);transition:all .2s}
+.qt-saved-card:hover{border-color:var(--ac);transform:translateY(-1px);box-shadow:var(--s2)}
+.qt-num-badge{background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:3px 11px;border-radius:6px;font-size:11.5px;font-weight:900}
+
 @media(max-width:900px){
   .main{margin-right:0}.sb{transform:translateX(100%)}.sb.open{transform:translateX(0)}
   .ham{display:flex}.q3{grid-template-columns:1fr 1fr}.setgrid{grid-template-columns:1fr}
@@ -430,6 +469,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
     <div class="ni" id="n-sup" onclick="go('sup')"><span class="nic">🏢</span>الموردون</div>
     <div class="ni" id="n-arc" onclick="go('arc')"><span class="nic">🗂</span>الأرشيف الشهري</div>
     <div class="ni" id="n-srch" onclick="go('srch')"><span class="nic">🔍</span>البحث المتقدم</div>
+    <div class="nsec">العملاء</div>
+    <div class="ni" id="n-quote" onclick="go('quote')"><span class="nic">📋</span>عروض الأسعار</div>
     <div class="nsec">التصدير والنظام</div>
     <div class="ni" id="n-dl" onclick="go('dl')"><span class="nic">⬇</span>التحميلات</div>
     <div class="ni" id="n-set" onclick="go('set')"><span class="nic">⚙</span>الإعدادات</div>
@@ -601,6 +642,106 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
           <div class="swrap" id="swp"><select class="stype" id="sType" onchange="onTC()"><option value="sup">اسم المورد</option><option value="date">تاريخ محدد</option><option value="day">يوم الأسبوع</option><option value="mon">الشهر</option><option value="num">رقم الفاتورة</option><option value="cat">التصنيف</option></select><input class="sinp" id="sInp" placeholder="اكتب أو اختر من القائمة..." oninput="onSI()" autocomplete="off"><button class="clr" id="clrb" onclick="clrSr()">✕</button><div class="acdrop" id="acDrop"></div></div>
           <div id="resBar" style="display:none" class="resbar"><div class="restag" id="resTag"></div><div style="display:flex;gap:6px"><button class="btn bg sm" onclick="exSXL()">⬇ Excel</button><button class="btn bb sm" onclick="exSPDF()">⬇ PDF</button></div></div>
           <div id="srRes"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRICE QUOTE -->
+    <div class="page" id="page-quote">
+      <!-- Header template preview -->
+      <div class="qt-hdr">
+        <div class="qt-co-info">
+          <h4>مؤسسة المقبض الاسود التجارية</h4>
+          <p>الرقم الضريبي: 302210041700003 &nbsp;|&nbsp; السجل التجاري: 1009151735<br>
+          العنوان: 350، الرياض، السعودية - 12694<br>
+          Tel: 966 53 223 6848 &nbsp;|&nbsp; info@meqbad.com &nbsp;|&nbsp; meqbad.com</p>
+        </div>
+        <div class="qt-logo-box">
+          <div class="qtl-en">Meqbad</div>
+          <div class="qtl-ar">مقبض</div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="ch">
+          <h3 id="qtFormTitle">📋 إنشاء عرض سعر جديد</h3>
+          <div style="display:flex;gap:7px">
+            <button class="btn bam sm" onclick="exportQPDF(null)">📄 PDF مباشر</button>
+            <button class="btn sm" onclick="rstQ()">🔄 تفريغ</button>
+          </div>
+        </div>
+        <div class="cb">
+          <!-- Meta row -->
+          <div class="qt-meta">
+            <div class="qt-meta-box">
+              <div class="qtm-l">رقم عرض السعر</div>
+              <input id="qtNum" class="qtm-v" placeholder="QT-001">
+            </div>
+            <div class="qt-meta-box">
+              <div class="qtm-l">تاريخ الإصدار</div>
+              <input type="date" id="qtDate" class="qtm-v">
+            </div>
+            <div class="qt-meta-box">
+              <div class="qtm-l">صلاحية العرض</div>
+              <div class="qtm-v">7 أيام</div>
+            </div>
+          </div>
+          <!-- Customer -->
+          <div class="qt-cust">
+            <label>👤 المرسل إليه:</label>
+            <input id="qtCustomer" placeholder="اسم العميل أو الشركة..." oninput="">
+          </div>
+          <!-- Items table -->
+          <div class="tscr">
+            <table class="qt-tbl" style="min-width:620px">
+              <thead>
+                <tr>
+                  <th style="width:36%">وصف الخدمة / السلعة<br><small style="font-weight:600;opacity:.7">Description</small></th>
+                  <th style="width:10%">الكمية<br><small style="font-weight:600;opacity:.7">Qty</small></th>
+                  <th style="width:13%">السعر<br><small style="font-weight:600;opacity:.7">Price</small></th>
+                  <th style="width:16%">إجمالي التكلفة<br><small style="font-weight:600;opacity:.7">Total Cost</small></th>
+                  <th style="width:16%">اجمالي مع الضريبة<br><small style="font-weight:600;opacity:.7">With VAT</small></th>
+                  <th style="width:9%"></th>
+                </tr>
+              </thead>
+              <tbody id="qtBody"></tbody>
+            </table>
+          </div>
+          <button class="btn bp sm" onclick="addQRow()" style="margin-top:10px">+ إضافة بند</button>
+
+          <!-- Summary -->
+          <div class="qt-sum">
+            <div class="qt-sum-box">
+              <div class="qt-srow"><span class="qt-sl">الاجمالي قبل الضريبة</span><span class="qt-sv" id="qtSubtotal">0.00 ر.س</span></div>
+              <div class="qt-srow"><span class="qt-sl">الضريبة 15% VAT</span><span class="qt-sv" id="qtVAT" style="color:var(--r)">0.00 ر.س</span></div>
+              <div class="qt-srow"><span class="qt-sl">الاجمالي النهائي</span><span class="qt-sv" id="qtGrand">0.00 ر.س</span></div>
+            </div>
+          </div>
+
+          <!-- Bank -->
+          <div class="qt-bank">
+            <span>🏦 <strong>الحساب البنكي:</strong> SA0580000510608016264429 &nbsp;|&nbsp; بنك الراجحي</span>
+          </div>
+
+          <!-- Actions -->
+          <div class="fac" style="margin-top:16px">
+            <button class="btn" onclick="rstQ()">إلغاء</button>
+            <button class="btn bam" onclick="savQ()"><span id="qtSaveBtnLabel">💾 حفظ العرض</span></button>
+            <button class="btn bp" onclick="exportQPDF(null)">📄 تصدير PDF</button>
+          </div>
+          <div class="toast ok" id="qtSaveToast" style="margin-top:10px">✅ تم حفظ عرض السعر</div>
+        </div>
+      </div>
+
+      <!-- Saved quotes list -->
+      <div class="card">
+        <div class="ch">
+          <h3>🗂 العروض المحفوظة</h3>
+          <span id="qtCount" style="font-size:12px;color:var(--mu);font-weight:700;background:var(--bd2);padding:3px 11px;border-radius:20px"></span>
+        </div>
+        <div class="cb" id="qtList">
+          <div style="padding:2rem;text-align:center;color:var(--mu)">لا توجد عروض أسعار محفوظة بعد</div>
         </div>
       </div>
     </div>
@@ -1084,7 +1225,7 @@ function smMap(list) {
 // ══════════════════════════════════════════════
 // NAV
 // ══════════════════════════════════════════════
-const PN = {dash:'لوحة التحكم',profit:'الأرباح والخسائر',exp:'المصروفات',rep:'التقارير الربعية',tax:'الضريبة (VAT)',sup:'الموردون',arc:'الأرشيف الشهري',srch:'البحث المتقدم',dl:'التحميلات',set:'الإعدادات'};
+const PN = {dash:'لوحة التحكم',profit:'الأرباح والخسائر',exp:'المصروفات',rep:'التقارير الربعية',tax:'الضريبة (VAT)',sup:'الموردون',arc:'الأرشيف الشهري',srch:'البحث المتقدم',quote:'عروض الأسعار',dl:'التحميلات',set:'الإعدادات'};
 
 function go(p) {
   document.querySelectorAll('.page').forEach(e => e.classList.remove('on'));
@@ -1098,7 +1239,7 @@ function go(p) {
   const rs = {
     dash: rDash, profit: rProfit, exp: rExp, rep: rRep, tax: rVAT,
     sup: rSup, arc: rArc, srch: () => { document.getElementById('srNote').textContent=`نطاق البحث: عام ${getY()}`; },
-    dl: rDL, set: rSet
+    quote: rQuote, dl: rDL, set: rSet
   };
   if (rs[p]) rs[p]();
   // عرض المسودة عند فتح صفحة المصروفات
@@ -1749,6 +1890,348 @@ function exVAT(){
   row('إجمالي المشتريات',fmt(pS)+' ر.س');row('ضريبة المدخلات (خصم)',fmt(pT)+' ر.س',[5,150,105]);y2+=8;
   const isR=net<0;doc.setFillColor(isR?240:255,isR?253:241,isR?244:242);doc.rect(10,y2-6,W-20,20,'F');doc.setTextColor(isR?5:220,isR?150:38,isR?105:38);doc.setFontSize(11);doc.text(isR?'رصيد ضريبي لصالحك':'صافي الضريبة المستحقة للدفع',W-14,y2+6,{align:'right'});doc.setFontSize(18);doc.text(fmt(Math.abs(net))+' ر.س',14,y2+6,{align:'left'});
   doc.save(`اقرار_${q.l}_${y}.pdf`);
+}
+
+// ══════════════════════════════════════════════
+// PRICE QUOTES
+// ══════════════════════════════════════════════
+let quotes = JSON.parse(localStorage.getItem('price_quotes') || '[]');
+let qEditId = null;
+
+function genQNum() {
+  const max = quotes.reduce((m, q) => Math.max(m, parseInt((q.num || '').replace(/\D/g, '') || 0)), 0);
+  return 'QT-' + String(max + 1).padStart(3, '0');
+}
+
+function initQForm() {
+  document.getElementById('qtNum').value = genQNum();
+  document.getElementById('qtDate').value = new Date().toISOString().split('T')[0];
+  if (!document.getElementById('qtBody').rows.length) {
+    addQRow(); addQRow(); addQRow();
+    calcQ();
+  }
+}
+
+function rQuote() {
+  initQForm();
+  const list = document.getElementById('qtList');
+  const cnt = document.getElementById('qtCount');
+  cnt.textContent = quotes.length + ' عرض';
+  if (!quotes.length) {
+    list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--mu)">لا توجد عروض أسعار محفوظة بعد</div>';
+    return;
+  }
+  list.innerHTML = quotes.slice().map(q => `
+    <div class="qt-saved-card">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <span class="qt-num-badge">${q.num}</span>
+          <span style="font-size:14px;font-weight:800;color:var(--c2)">${q.customer || 'غير محدد'}</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--mu)">${q.date} &nbsp;·&nbsp; ${(q.items||[]).filter(i=>i.desc).length} بند &nbsp;·&nbsp; إجمالي نهائي: <strong style="color:var(--b)">${fmt(q.grandTotal)} ر.س</strong></div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bam sm" onclick="exportQPDF('${q.id}')">📄 PDF</button>
+        <button class="btn bp sm" onclick="editQ('${q.id}')">✏ تعديل</button>
+        <button class="btn brd sm" onclick="delQ('${q.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function addQRow(desc = '', qty = 1, price = 0) {
+  const tb = document.getElementById('qtBody');
+  const row = tb.insertRow();
+  const sub = qty * price;
+  const withVat = sub * 1.15;
+  row.innerHTML = `
+    <td><input type="text" placeholder="وصف الخدمة أو السلعة..." value="${desc}" oninput="calcQ()" style="width:100%"></td>
+    <td><input type="number" min="1" step="1" value="${qty}" oninput="calcQ()"></td>
+    <td><input type="number" min="0" step="0.01" value="${price || ''}" placeholder="0.00" oninput="calcQ()"></td>
+    <td class="qt-calc">${sub.toFixed(2)}</td>
+    <td class="qt-calc-vat">${withVat.toFixed(2)}</td>
+    <td><button onclick="this.closest('tr').remove();calcQ()" style="background:#fee2e2;border:1px solid #fecaca;color:var(--r);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;font-weight:700;line-height:1">✕</button></td>`;
+}
+
+function calcQ() {
+  let subtotal = 0;
+  document.querySelectorAll('#qtBody tr').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const qty   = parseFloat(inputs[1]?.value) || 0;
+    const price = parseFloat(inputs[2]?.value) || 0;
+    const sub   = qty * price;
+    const withV = sub * 1.15;
+    row.querySelector('.qt-calc').textContent     = sub.toFixed(2);
+    row.querySelector('.qt-calc-vat').textContent = withV.toFixed(2);
+    subtotal += sub;
+  });
+  const vat   = subtotal * 0.15;
+  const grand = subtotal + vat;
+  document.getElementById('qtSubtotal').textContent = fmt(subtotal) + ' ر.س';
+  document.getElementById('qtVAT').textContent       = fmt(vat) + ' ر.س';
+  document.getElementById('qtGrand').textContent     = fmt(grand) + ' ر.س';
+}
+
+function getQItems() {
+  const items = [];
+  document.querySelectorAll('#qtBody tr').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const desc  = inputs[0]?.value || '';
+    const qty   = parseFloat(inputs[1]?.value) || 0;
+    const price = parseFloat(inputs[2]?.value) || 0;
+    items.push({ desc, qty, price, sub: qty * price, withVat: qty * price * 1.15 });
+  });
+  return items;
+}
+
+function savQ() {
+  const num      = document.getElementById('qtNum').value.trim();
+  const date     = document.getElementById('qtDate').value;
+  const customer = document.getElementById('qtCustomer').value.trim();
+  if (!num || !date)     { alert('يرجى ملء رقم العرض والتاريخ'); return; }
+  if (!customer)         { alert('يرجى كتابة اسم العميل'); return; }
+  const items = getQItems().filter(i => i.desc || i.price);
+  if (!items.length)     { alert('يرجى إضافة بند واحد على الأقل مع وصف'); return; }
+  const subtotal  = items.reduce((s, i) => s + i.sub, 0);
+  const vat       = subtotal * 0.15;
+  const grandTotal = subtotal + vat;
+  const q = { id: qEditId || Date.now().toString(), num, date, customer, items, subtotal, vat, grandTotal, created: new Date().toISOString() };
+  if (qEditId) {
+    const idx = quotes.findIndex(x => x.id === qEditId);
+    if (idx !== -1) quotes[idx] = q; else quotes.unshift(q);
+    qEditId = null;
+  } else {
+    quotes.unshift(q);
+  }
+  localStorage.setItem('price_quotes', JSON.stringify(quotes));
+  logAction('عرض سعر', `رقم ${num} — ${customer} — ${fmt(grandTotal)} ر.س`);
+  rstQ();
+  rQuote();
+  const toast = document.getElementById('qtSaveToast');
+  toast.style.display = 'flex';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+function rstQ() {
+  qEditId = null;
+  document.getElementById('qtNum').value = genQNum();
+  document.getElementById('qtDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('qtCustomer').value = '';
+  document.getElementById('qtBody').innerHTML = '';
+  addQRow(); addQRow(); addQRow();
+  calcQ();
+  document.getElementById('qtFormTitle').textContent = '📋 إنشاء عرض سعر جديد';
+  document.getElementById('qtSaveBtnLabel').textContent = '💾 حفظ العرض';
+  document.getElementById('qtSaveToast').style.display = 'none';
+}
+
+function editQ(id) {
+  const q = quotes.find(x => x.id === id);
+  if (!q) return;
+  qEditId = id;
+  document.getElementById('qtNum').value = q.num;
+  document.getElementById('qtDate').value = q.date;
+  document.getElementById('qtCustomer').value = q.customer;
+  document.getElementById('qtBody').innerHTML = '';
+  (q.items || []).forEach(i => addQRow(i.desc, i.qty, i.price));
+  calcQ();
+  document.getElementById('qtFormTitle').textContent = '✏ تعديل عرض السعر';
+  document.getElementById('qtSaveBtnLabel').textContent = '💾 حفظ التعديلات';
+  document.getElementById('page-quote').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function delQ(id) {
+  if (!confirm('هل تريد حذف هذا العرض نهائياً؟')) return;
+  quotes = quotes.filter(x => x.id !== id);
+  localStorage.setItem('price_quotes', JSON.stringify(quotes));
+  rQuote();
+}
+
+function exportQPDF(id) {
+  let q;
+  if (id) {
+    q = quotes.find(x => x.id === id);
+    if (!q) return;
+  } else {
+    // Build from current form
+    const items = getQItems().filter(i => i.desc || i.price);
+    const subtotal  = items.reduce((s, i) => s + i.sub, 0);
+    const vat       = subtotal * 0.15;
+    q = {
+      num      : document.getElementById('qtNum').value || genQNum(),
+      date     : document.getElementById('qtDate').value,
+      customer : document.getElementById('qtCustomer').value || '...',
+      items, subtotal, vat,
+      grandTotal: subtotal + vat
+    };
+  }
+  genQuotePDF(q);
+}
+
+function genQuotePDF(q) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+
+  // ── Gold header band ──
+  doc.setFillColor(245, 158, 11);
+  doc.rect(0, 0, W, 50, 'F');
+
+  // Logo box (right in LTR PDF = right side)
+  doc.setFillColor(7, 17, 31);
+  doc.roundedRect(W - 48, 6, 40, 36, 5, 5, 'F');
+  doc.setTextColor(245, 158, 11);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('Meqbad', W - 28, 21, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(200, 200, 200);
+  doc.text('meqbad.com', W - 28, 29, { align: 'center' });
+  doc.setTextColor(245, 158, 11);
+  doc.setFontSize(8);
+  doc.text('مقبض', W - 28, 37, { align: 'center' });
+
+  // Company info (left)
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(11);
+  doc.text('Moassasat Almeqbad Alasod Altijaria', 12, 14);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text('Tax No: 302210041700003  |  CR: 1009151735', 12, 22);
+  doc.text('350, Riyadh, Saudi Arabia - 12694', 12, 29);
+  doc.text('+966 53 223 6848  |  info@meqbad.com', 12, 36);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('(Meqbad) مؤسسة المقبض الاسود التجارية', 12, 44);
+
+  // ── Dark title band ──
+  doc.setFillColor(7, 17, 31);
+  doc.rect(0, 50, W, 16, 'F');
+  doc.setTextColor(245, 158, 11);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Price Quote  /  عرض سعر', W / 2, 61, { align: 'center' });
+
+  // ── Meta boxes ──
+  let y = 74;
+  const bW = (W - 28) / 3;
+  [
+    ['Quote No. / رقم العرض', q.num],
+    ['Issue Date / تاريخ الإصدار', q.date],
+    ['Valid / الصلاحية', '7 Days / أيام']
+  ].forEach((item, i) => {
+    const bx = 14 + i * (bW + 7);
+    doc.setFillColor(254, 243, 199);
+    doc.roundedRect(bx, y - 5, bW, 17, 3, 3, 'F');
+    doc.setDrawColor(245, 158, 11);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(bx, y - 5, bW, 17, 3, 3, 'S');
+    doc.setTextColor(146, 64, 14);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text(item[0], bx + bW / 2, y + 1, { align: 'center' });
+    doc.setTextColor(7, 17, 31);
+    doc.setFontSize(9);
+    doc.text(String(item[1]), bx + bW / 2, y + 9, { align: 'center' });
+  });
+
+  y += 22;
+
+  // ── Customer box ──
+  doc.setFillColor(239, 246, 255);
+  doc.roundedRect(14, y, W - 28, 13, 3, 3, 'F');
+  doc.setDrawColor(147, 197, 253);
+  doc.roundedRect(14, y, W - 28, 13, 3, 3, 'S');
+  doc.setTextColor(30, 64, 175);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('To / المرسل إليه:  ' + (q.customer || '...'), 18, y + 8.5);
+
+  y += 19;
+
+  // ── Items table ──
+  const tableRows = (q.items || [])
+    .filter(i => i.desc || i.price)
+    .map((item, idx) => [
+      String(idx + 1),
+      item.desc || '—',
+      String(item.qty || 1),
+      (item.price || 0).toFixed(2),
+      (item.sub || 0).toFixed(2),
+      ((item.sub || 0) * 1.15).toFixed(2)
+    ]);
+  if (!tableRows.length) tableRows.push(['1', '—', '1', '0.00', '0.00', '0.00']);
+
+  doc.autoTable({
+    startY: y,
+    head: [['#', 'Description / الوصف', 'Qty', 'Price (SAR)', 'Total Cost', 'With VAT 15%']],
+    body: tableRows,
+    styles: { font: 'helvetica', fontSize: 9, cellPadding: 3, halign: 'center' },
+    headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0], fontSize: 9, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [255, 252, 235] },
+    columnStyles: {
+      0: { cellWidth: 12 },
+      1: { halign: 'left', cellWidth: 68 },
+      2: { cellWidth: 18 },
+      3: { cellWidth: 26 },
+      4: { cellWidth: 28 },
+      5: { cellWidth: 30 }
+    },
+    margin: { left: 14, right: 14 }
+  });
+
+  y = doc.lastAutoTable.finalY + 10;
+
+  // ── Totals ──
+  const sumX = W - 84;
+  const sumW = 70;
+  [
+    { label: 'Subtotal / الاجمالي', val: (q.subtotal || 0).toFixed(2), fill: [254, 252, 232], last: false },
+    { label: 'VAT 15% / الضريبة', val: (q.vat || 0).toFixed(2), fill: [255, 241, 242], last: false },
+    { label: 'GRAND TOTAL / الاجمالي النهائي', val: (q.grandTotal || 0).toFixed(2), fill: [245, 158, 11], last: true }
+  ].forEach(row => {
+    const rH = row.last ? 13 : 10;
+    doc.setFillColor(...row.fill);
+    doc.rect(sumX - 4, y - 4, sumW + 8, rH + 2, 'F');
+    doc.setTextColor(row.last ? 0 : 80, row.last ? 0 : 80, row.last ? 0 : 80);
+    doc.setFont('helvetica', row.last ? 'bold' : 'normal');
+    doc.setFontSize(row.last ? 9 : 8);
+    doc.text(row.label, sumX, y + 3, { align: 'left' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(row.val + ' SAR', sumX + sumW, y + 3, { align: 'right' });
+    y += rH + 3;
+  });
+
+  y += 8;
+
+  // ── Bank details ──
+  if (y > H - 32) { doc.addPage(); y = 16; }
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(14, y, W - 28, 18, 3, 3, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.roundedRect(14, y, W - 28, 18, 3, 3, 'S');
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('Bank Details / الحساب البنكي:', 18, y + 7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(7, 17, 31);
+  doc.setFontSize(9.5);
+  doc.text('SA0580000510608016264429', 18, y + 14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Al Rajhi Bank / بنك الراجحي', W - 18, y + 14, { align: 'right' });
+
+  // ── Footer ──
+  doc.setFillColor(7, 17, 31);
+  doc.rect(0, H - 14, W, 14, 'F');
+  doc.setTextColor(245, 158, 11);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.text('meqbad.com  |  info@meqbad.com  |  +966 53 223 6848', W / 2, H - 5, { align: 'center' });
+
+  doc.save(`عرض_سعر_${q.num || 'new'}_${(q.customer || '').slice(0, 20)}.pdf`);
 }
 
 // ── Enter للحفظ في نموذج الفاتورة ──
