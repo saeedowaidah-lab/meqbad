@@ -2372,12 +2372,11 @@ function openQPrintWindow(q) {
   const items = (q.items||[]).filter(i=>i.desc||i.price);
   const fmtN  = v => Number(v||0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2});
   const logoB64 = localStorage.getItem('app_logo');
-  const logoBoxStyle = logoB64
-    ? 'background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.15);padding:8px;'
-    : '';
-  const logoHTML = logoB64
-    ? `<img src="${logoB64}" style="width:74px;height:74px;object-fit:contain;display:block;border-radius:8px">`
-    : `<span class="qlge">Meqbad</span><span class="qlga">مقبض</span>`;
+  const logoBox = logoB64
+    ? `<div style="width:90px;height:90px;background:#fff;border-radius:14px;padding:6px;box-shadow:0 2px 16px rgba(0,0,0,.18);flex-shrink:0;display:flex;align-items:center;justify-content:center">
+         <img src="${logoB64}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:9px">
+       </div>`
+    : `<div class="qlg"><span class="qlge">Meqbad</span><span class="qlga">مقبض</span></div>`;
   const rows  = items.map((it,i)=>`
     <tr>
       <td>${i+1}</td>
@@ -2401,17 +2400,20 @@ function openQPrintWindow(q) {
 /* ── Page wrapper ── */
 .qpage{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}
 /* ── Header ── */
-.qhdr{background:linear-gradient(135deg,#0d1b3e 0%,#1a3461 60%,#0f2550 100%);padding:26px 32px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+/* ── Title band (top center) ── */
+.qtband{background:linear-gradient(90deg,#0d1b3e,#1a3461,#0d1b3e);padding:12px 32px;text-align:center}
+.qtband-main{color:#e8b84b;font-size:16px;font-weight:900;letter-spacing:1px;display:block}
+.qtband-sub{color:rgba(255,255,255,.5);font-size:11px;font-weight:600;display:block;margin-top:2px}
+/* ── Header (logo + company info side by side) ── */
+.qhdr{background:linear-gradient(135deg,#0d1b3e 0%,#1a3461 60%,#0f2550 100%);padding:22px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.qhdr-left{flex-shrink:0}
+.qhdr-info{flex:1;min-width:0}
 .qco-badge{display:inline-block;background:rgba(200,153,42,.18);border:1px solid rgba(200,153,42,.45);color:#e8b84b;font-size:9px;font-weight:800;letter-spacing:.8px;padding:3px 10px;border-radius:20px;margin-bottom:8px;text-transform:uppercase}
 .qco h2{font-size:17px;font-weight:900;color:#fff;margin-bottom:7px;line-height:1.35}
 .qco p{font-size:10px;color:rgba(255,255,255,.65);line-height:2.1}
 .qlg{background:linear-gradient(135deg,#c8992a,#e8b84b);border-radius:14px;padding:14px 22px;text-align:center;min-width:96px;flex-shrink:0;box-shadow:0 4px 18px rgba(200,153,42,.4)}
 .qlge{color:#0d1b3e;font-size:24px;font-weight:900;display:block;letter-spacing:.5px}
 .qlga{color:rgba(13,27,62,.6);font-size:10px;display:block;margin-top:4px;font-weight:700}
-/* ── Title band ── */
-.qtband{background:linear-gradient(90deg,#1a3461,#0d1b3e);padding:11px 32px;display:flex;justify-content:space-between;align-items:center}
-.qtband-main{color:#e8b84b;font-size:14px;font-weight:900;letter-spacing:.3px}
-.qtband-sub{color:rgba(255,255,255,.45);font-size:11px;font-weight:600}
 /* ── Body padding ── */
 .qbody{padding:24px 28px;display:flex;flex-direction:column;gap:20px}
 /* ── Meta boxes ── */
@@ -2464,21 +2466,23 @@ function openQPrintWindow(q) {
 .qftr-brand{color:#e8b84b;font-size:11px;font-weight:900;letter-spacing:.3px}
 </style>
 <div class="qpage">
-<div class="qhdr">
-  <div class="qco">
-    <div class="qco-badge">مؤسسة تجارية مسجلة</div>
-    <h2>مؤسسة المقبض الاسود التجارية</h2>
-    <p>
-      الرقم الضريبي: 302210041700003 &nbsp;|&nbsp; السجل التجاري: 1009151735<br>
-      350، الرياض، المملكة العربية السعودية - 12694<br>
-      Tel: +966 53 223 6848 &nbsp;|&nbsp; info@meqbad.com &nbsp;|&nbsp; meqbad.com
-    </p>
-  </div>
-  <div class="qlg" style="${logoBoxStyle}">${logoHTML}</div>
-</div>
 <div class="qtband">
-  <span class="qtband-main">عرض سعر</span>
+  <span class="qtband-main">عـرض سعـر</span>
   <span class="qtband-sub">Price Quotation</span>
+</div>
+<div class="qhdr">
+  <div class="qhdr-left">${logoBox}</div>
+  <div class="qhdr-info">
+    <div class="qco">
+      <div class="qco-badge">مؤسسة تجارية مسجلة</div>
+      <h2>مؤسسة المقبض الاسود التجارية</h2>
+      <p>
+        الرقم الضريبي: 302210041700003 &nbsp;|&nbsp; السجل التجاري: 1009151735<br>
+        350، الرياض، المملكة العربية السعودية - 12694<br>
+        Tel: +966 53 223 6848 &nbsp;|&nbsp; info@meqbad.com &nbsp;|&nbsp; meqbad.com
+      </p>
+    </div>
+  </div>
 </div>
 <div class="qbody">
   <div class="qmeta">
