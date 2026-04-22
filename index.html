@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="مقبض">
 <link rel="manifest" href="manifest.json">
 <title>متجر مقبض</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -27,7 +27,7 @@
   --s3:0 10px 40px rgba(0,0,0,.18);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Tajawal',sans-serif;direction:rtl;background:var(--bg);color:var(--tx);font-size:14px;min-height:100vh;overflow-x:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,'IBM Plex Sans Arabic',sans-serif;direction:rtl;background:var(--bg);color:var(--tx);font-size:14px;min-height:100vh;overflow-x:hidden}
 
 /* ─── AUTH ─── */
 #authWrap{position:fixed;inset:0;background:linear-gradient(145deg,var(--c0) 0%,var(--c1) 35%,var(--c2) 75%,var(--c3) 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem}
@@ -567,6 +567,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 
     <!-- DASHBOARD -->
     <div class="page on" id="page-dash">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn sm prv-btn" onclick="togglePrivacy()" style="gap:6px;font-size:12px;color:var(--mu);border-color:var(--bd)">🔒 إخفاء المبالغ</button>
+      </div>
       <div class="mcrow" id="dMcs"></div>
       <div class="two">
         <div class="card"><div class="ch"><h3>📊 المصروفات الشهرية <span id="dYr" style="color:var(--ac);font-size:13px;font-weight:700"></span></h3><button class="btn sm" onclick="go('exp')">عرض الكل ←</button></div>
@@ -994,6 +997,16 @@ const QQ = [
 let CU = null; // current user
 let invs = [], sdata = {};
 let selM = new Date().getMonth(), selQ = 0;
+let privacyOn = localStorage.getItem('dash_privacy') === '1';
+function fmtP(v){ return privacyOn ? '••••' : fmt(v); }
+function togglePrivacy(){
+  privacyOn = !privacyOn;
+  localStorage.setItem('dash_privacy', privacyOn ? '1' : '0');
+  document.querySelectorAll('.prv-btn').forEach(b => {
+    b.innerHTML = privacyOn ? '👁 إظهار المبالغ' : '🔒 إخفاء المبالغ';
+  });
+  rDash();
+}
 let curPage = 'dash';
 let srRes = null, sMI = null, sDI = null;
 let imgData = null, imgType = null;
@@ -1507,6 +1520,10 @@ function rstB() {
 // DASHBOARD
 // ══════════════════════════════════════════════
 function rDash() {
+  // sync privacy button label
+  document.querySelectorAll('.prv-btn').forEach(b => {
+    b.innerHTML = privacyOn ? '👁 إظهار المبالغ' : '🔒 إخفاء المبالغ';
+  });
   const y = getY(), yi = invs.filter(i=>i.year===y);
   const tot = yi.reduce((s,i)=>s+i.total,0);
   const tax = yi.reduce((s,i)=>s+i.tax,0);
@@ -1514,26 +1531,27 @@ function rDash() {
   const tS = QQ.reduce((s,q)=>s+q.m.reduce((a,m)=>a+getS(m,y),0),0);
   const pr = tS-tot;
   document.getElementById('dYr').textContent = y;
+  const prvSAR = privacyOn ? '' : '<span style="font-size:12px;font-weight:600"> ر.س</span>';
   document.getElementById('dMcs').innerHTML = `
-    <div class="mc am"><div class="mcs"></div><span class="mci">💸</span><div class="mcl">إجمالي المصروفات ${y}</div><div class="mcv">${fmt(tot)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">السنة كاملة</div></div>
-    <div class="mc rd"><div class="mcs"></div><span class="mci">🧾</span><div class="mcl">إجمالي الضريبة ${y}</div><div class="mcv">${fmt(tax)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">ضريبة المدخلات</div></div>
-    <div class="mc bl"><div class="mcs"></div><span class="mci">📅</span><div class="mcl">مصروفات ${MN[selM]}</div><div class="mcv">${fmt(mtot)}</div><div class="mcsub">${gl(selM,y).length} فاتورة</div></div>
+    <div class="mc am"><div class="mcs"></div><span class="mci">💸</span><div class="mcl">إجمالي المصروفات ${y}</div><div class="mcv">${fmtP(tot)}${prvSAR}</div><div class="mcsub">السنة كاملة</div></div>
+    <div class="mc rd"><div class="mcs"></div><span class="mci">🧾</span><div class="mcl">إجمالي الضريبة ${y}</div><div class="mcv">${fmtP(tax)}${prvSAR}</div><div class="mcsub">ضريبة المدخلات</div></div>
+    <div class="mc bl"><div class="mcs"></div><span class="mci">📅</span><div class="mcl">مصروفات ${MN[selM]}</div><div class="mcv">${fmtP(mtot)}</div><div class="mcsub">${gl(selM,y).length} فاتورة</div></div>
     <div class="mc nv"><div class="mcs"></div><span class="mci">📋</span><div class="mcl">عدد الفواتير</div><div class="mcv">${yi.length}</div><div class="mcsub">لعام ${y}</div></div>
-    <div class="mc ${tS>0?(pr>=0?'gr':'rd'):'tl'}"><div class="mcs"></div><span class="mci">${pr>=0?'📈':'📉'}</span><div class="mcl">${tS>0?'صافي الربح/الخسارة':'المبيعات المسجلة'}</div><div class="mcv">${tS>0?fmt(Math.abs(pr)):fmt(tS)}</div><div class="mcsub">${tS>0?(pr>=0?'ربح ✅':'خسارة ❌'):'انظر الأرباح'}</div></div>`;
+    <div class="mc ${tS>0?(pr>=0?'gr':'rd'):'tl'}"><div class="mcs"></div><span class="mci">${pr>=0?'📈':'📉'}</span><div class="mcl">${tS>0?'صافي الربح/الخسارة':'المبيعات المسجلة'}</div><div class="mcv">${tS>0?fmtP(Math.abs(pr)):fmtP(tS)}</div><div class="mcsub">${tS>0?(pr>=0?'ربح ✅':'خسارة ❌'):'انظر الأرباح'}</div></div>`;
   const data = MN.map((_,i) => ({i, t: gl(i,y).reduce((s,x)=>s+x.total,0)}));
   const mx = Math.max(...data.map(d=>d.t),1);
   document.getElementById('dBar').innerHTML = data.map(d => `<div class="bcol" onclick="selM=${d.i};go('exp')" title="${MN[d.i]}"><div class="bval">${d.t>0?Math.round(d.t/1000)+'k':''}</div><div class="bf ${d.i===selM?'act':''}" style="height:${Math.max(3,Math.round(d.t/mx*74))}px"></div><div class="blbl">${MN[d.i].slice(0,3)}</div></div>`).join('');
   const cm = {};
   yi.forEach(i => { if(!cm[i.cat]) cm[i.cat]={c:0,t:0}; cm[i.cat].c++; cm[i.cat].t+=i.total; });
   document.getElementById('dCats').innerHTML = Object.entries(cm).sort((a,b)=>b[1].t-a[1].t).map(([c,d]) =>
-    `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f8fa;font-size:12.5px"><span><span class="badge ${cc(c)}">${c}</span><span style="font-size:10px;color:var(--mu2);margin-right:6px">(${d.c})</span></span><span style="font-weight:900;color:var(--c2)">${fmt(d.t)}</span></div>`
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f8fa;font-size:12.5px"><span><span class="badge ${cc(c)}">${c}</span><span style="font-size:10px;color:var(--mu2);margin-right:6px">(${d.c})</span></span><span style="font-weight:900;color:var(--c2)">${fmtP(d.t)}</span></div>`
   ).join('');
   document.getElementById('dRec').innerHTML = [...yi].sort((a,b)=>b.id-a.id).slice(0,6).map(i =>
-    `<div style="display:flex;justify-content:space-between;padding:9px 18px;border-bottom:1px solid #f5f8fa;font-size:12.5px;align-items:center"><div><div style="font-weight:800;color:var(--c2)">${i.supplier||'—'}</div><div style="color:var(--mu);font-size:11px;margin-top:1px">${i.date} · ${i.desc?i.desc.slice(0,28):'—'}</div></div><span style="font-weight:900;color:var(--b);white-space:nowrap">${fmt(i.total)} ر.س</span></div>`
+    `<div style="display:flex;justify-content:space-between;padding:9px 18px;border-bottom:1px solid #f5f8fa;font-size:12.5px;align-items:center"><div><div style="font-weight:800;color:var(--c2)">${i.supplier||'—'}</div><div style="color:var(--mu);font-size:11px;margin-top:1px">${i.date} · ${i.desc?i.desc.slice(0,28):'—'}</div></div><span style="font-weight:900;color:var(--b);white-space:nowrap">${fmtP(i.total)}${privacyOn?'':' ر.س'}</span></div>`
   ).join('') || '<div style="padding:2rem;text-align:center;color:var(--mu)">لا توجد فواتير</div>';
   const sup = smMap(yi);
   document.getElementById('dSup').innerHTML = Object.entries(sup).sort((a,b)=>b[1].total-a[1].total).slice(0,6).map(([n,d]) =>
-    `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 18px;border-bottom:1px solid #f5f8fa"><div style="font-weight:800;color:var(--c2);font-size:13px">${n}<span style="font-size:11px;color:var(--mu2);font-weight:500;margin-right:5px">(${d.cnt})</span></div><span style="font-weight:900;color:var(--b)">${fmt(d.total)}</span></div>`
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 18px;border-bottom:1px solid #f5f8fa"><div style="font-weight:800;color:var(--c2);font-size:13px">${n}<span style="font-size:11px;color:var(--mu2);font-weight:500;margin-right:5px">(${d.cnt})</span></div><span style="font-weight:900;color:var(--b)">${fmtP(d.total)}</span></div>`
   ).join('');
   // تنبيهات ذكية
   const alerts = [];
@@ -2239,9 +2257,9 @@ function openQPrintWindow(q) {
   document.getElementById('qtPrintTitle').textContent = `👁 عرض السعر #${q.num||''} — ${q.customer||''}`;
   document.getElementById('qtPrintContent').innerHTML = `
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap');
 #qtPrintContent{background:#f1f5f9;max-width:900px;margin:0 auto;direction:rtl;padding:32px 20px}
-#qtPrintContent *{box-sizing:border-box;margin:0;padding:0;font-family:'Tajawal',sans-serif}
+#qtPrintContent *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','IBM Plex Sans Arabic',sans-serif}
 /* ── Page wrapper ── */
 .qpage{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}
 /* ── Header ── */
