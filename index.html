@@ -410,6 +410,18 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 .qt-sr:last-child .sl{color:rgba(255,255,255,.7)}.qt-sr:last-child .sv{color:var(--qgd2);font-size:17px}
 /* Bank */
 .qt-bank{background:#f8faff;border:1.5px solid #e8edf5;border-radius:11px;padding:13px 18px;margin-top:14px;font-size:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;color:#6b7a99}
+/* Notes */
+.qt-notes-wrap{background:#fffbeb;border:1.5px solid #fde68a;border-radius:11px;padding:14px 18px;margin-top:14px}
+.qt-notes-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;font-weight:800;color:#92400e}
+.qt-notes-add{background:var(--qnv);color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;transition:.2s}
+.qt-notes-add:hover{background:var(--qnv2)}
+.qt-notes-add:disabled{opacity:.4;cursor:not-allowed}
+.qt-note-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.qt-note-num{width:24px;height:24px;background:var(--qnv);color:#e8b84b;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+.qt-note-inp{flex:1;border:1.5px solid #fcd34d;border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;background:#fff;outline:none;transition:.2s;color:#1e293b}
+.qt-note-inp:focus{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.qt-note-del{background:none;border:none;color:#ef4444;font-size:17px;cursor:pointer;padding:4px;line-height:1;border-radius:5px;transition:.2s}
+.qt-note-del:hover{background:#fee2e2}
 /* Saved */
 .qt-saved{background:#fff;border:1.5px solid #e8edf5;border-radius:13px;padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:var(--s1);transition:all .2s}
 .qt-saved:hover{border-color:var(--qnv2);box-shadow:0 4px 18px rgba(13,27,62,.1);transform:translateY(-1px)}
@@ -776,6 +788,14 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
             <!-- Bank -->
             <div class="qt-bank">
               <span>🏦 <strong style="color:var(--tx)">الحساب البنكي:</strong> SA0580000510608016264429 &nbsp;|&nbsp; بنك الراجحي</span>
+            </div>
+            <!-- Notes -->
+            <div class="qt-notes-wrap">
+              <div class="qt-notes-hdr">
+                <span>📝 ملاحظات (اختياري)</span>
+                <button class="qt-notes-add" onclick="addQNote()" id="qtNoteAddBtn">+ إضافة ملاحظة</button>
+              </div>
+              <div id="qtNotesBody"></div>
             </div>
             <!-- Actions -->
             <div class="fac" style="margin-top:16px;flex-wrap:wrap">
@@ -1960,6 +1980,7 @@ let quotes = JSON.parse(localStorage.getItem('price_quotes') || '[]');
 let qEditId = null;
 let qItems  = []; // [{ id, desc, qty, price }]
 let qNextId = 1;
+let qNotes  = []; // ['ملاحظة 1', ...]
 
 function genQNum() {
   const max = quotes.reduce((m, q) => Math.max(m, parseInt((q.num||'').replace(/\D/g,'')||0)), 0);
@@ -2088,10 +2109,12 @@ function savQ() {
   if (!customer)    { alert('يرجى كتابة اسم العميل'); return; }
   const d = buildQFromForm();
   if (!d.items.length){ alert('يرجى إضافة بند واحد على الأقل'); return; }
+  const notes = qNotes.map(n => n.trim()).filter(Boolean);
   const q = { id: qEditId||Date.now().toString(), num, date, customer,
     items: d.items, subtotal: d.subtotal, discount: d.discount, discType: d.discType,
     discVal: d.discVal, discLabel: d.discLabel, taxable: d.taxable,
-    vat: d.vat, grandTotal: d.grandTotal, created: new Date().toISOString() };
+    vat: d.vat, grandTotal: d.grandTotal, notes,
+    created: new Date().toISOString() };
   if (qEditId) {
     const idx = quotes.findIndex(x => x.id===qEditId);
     if(idx!==-1) quotes[idx]=q; else quotes.unshift(q);
@@ -2107,15 +2130,40 @@ function savQ() {
   setTimeout(()=>{ toast.style.display='none'; }, 3000);
 }
 
+function addQNote() {
+  if (qNotes.length >= 3) return;
+  qNotes.push('');
+  renderQNotes();
+}
+function removeQNote(i) {
+  qNotes.splice(i, 1);
+  renderQNotes();
+}
+function onQNote(i, val) {
+  qNotes[i] = val;
+}
+function renderQNotes() {
+  const body = document.getElementById('qtNotesBody'); if(!body) return;
+  const btn  = document.getElementById('qtNoteAddBtn'); if(btn) btn.disabled = qNotes.length >= 3;
+  body.innerHTML = qNotes.map((n, i) => `
+    <div class="qt-note-row">
+      <div class="qt-note-num">${i+1}</div>
+      <input class="qt-note-inp" type="text" value="${n.replace(/"/g,'&quot;')}"
+        placeholder="اكتب ملاحظة..."
+        oninput="onQNote(${i}, this.value)" maxlength="200">
+      <button class="qt-note-del" onclick="removeQNote(${i})" title="حذف">×</button>
+    </div>`).join('');
+}
+
 function rstQ() {
-  qEditId = null; qItems = []; qNextId = 1;
+  qEditId = null; qItems = []; qNextId = 1; qNotes = [];
   document.getElementById('qtNum').value = genQNum();
   document.getElementById('qtDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('qtCustomer').value = '';
   const dd = document.getElementById('qtDiscount'); if(dd) dd.value = '';
   const dt = document.getElementById('qtDiscType'); if(dt) dt.value = 'amount';
   addQItem(); addQItem(); addQItem();
-  renderQItems(); calcQ();
+  renderQItems(); calcQ(); renderQNotes();
   document.getElementById('qtFormTitle').textContent   = '📋 إنشاء عرض سعر جديد';
   document.getElementById('qtSaveBtnLabel').textContent = '💾 حفظ العرض';
 }
@@ -2129,7 +2177,8 @@ function editQ(id) {
   const dt = document.getElementById('qtDiscType'); if(dt) dt.value = q.discType||'amount';
   const dd = document.getElementById('qtDiscount'); if(dd) dd.value = q.discVal||'';
   (q.items||[]).forEach(i => qItems.push({ id: qNextId++, desc:i.desc, qty:i.qty, price:i.price }));
-  renderQItems(); calcQ();
+  qNotes = [...(q.notes||[])];
+  renderQItems(); calcQ(); renderQNotes();
   document.getElementById('qtFormTitle').textContent   = '✏ تعديل عرض السعر';
   document.getElementById('qtSaveBtnLabel').textContent = '💾 حفظ التعديلات';
   switchQTab(1);
@@ -2248,6 +2297,11 @@ function openQPrintWindow(q) {
 .qtv{font-weight:900;color:#0d1b3e}
 .qtrow:last-child .qtl{color:rgba(255,255,255,.75);font-size:13px}
 .qtrow:last-child .qtv{color:#e8b84b;font-size:20px;font-weight:900}
+/* ── Notes ── */
+.qnotes-sec{background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 18px;direction:rtl}
+.qnotes-title{font-size:11px;font-weight:900;color:#92400e;letter-spacing:.4px;margin-bottom:10px}
+.qnotes-list{padding-right:20px;margin:0;display:flex;flex-direction:column;gap:7px}
+.qnotes-list li{font-size:12.5px;color:#78350f;line-height:1.65;padding-right:4px}
 /* ── Footer ── */
 .qftr{background:linear-gradient(90deg,#0d1b3e,#1a3461);padding:14px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
 .qftr-txt{color:rgba(255,255,255,.5);font-size:10px}
@@ -2295,6 +2349,14 @@ function openQPrintWindow(q) {
     </table>
   </div>
   <div class="qdiv"></div>
+  ${(q.notes&&q.notes.filter(Boolean).length) ? `
+  <div class="qnotes-sec">
+    <div class="qnotes-title">📝 ملاحظات</div>
+    <ol class="qnotes-list">
+      ${q.notes.filter(Boolean).map(n=>`<li>${n}</li>`).join('')}
+    </ol>
+  </div>
+  <div class="qdiv"></div>` : ''}
   <div class="qbottom">
     <div class="qbank">
       <div class="qbank-title">🏦 تفاصيل الحساب البنكي</div>
