@@ -376,6 +376,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 .qt-tab{flex:1;padding:10px 8px;border:1.5px solid var(--bd);border-radius:11px;background:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--mu);transition:all .18s;text-align:center}
 .qt-tab.on{background:var(--qnv);color:#fff;border-color:var(--qnv);box-shadow:0 4px 14px rgba(13,27,62,.22)}
 .qt-tab:hover:not(.on){background:#f0f4ff;border-color:#c7d2f0;color:var(--qnv)}
+.sal-tab{padding:9px 16px;border:1.5px solid var(--bd);border-radius:11px;background:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--mu);transition:all .18s}
+.sal-tab.on{background:var(--c2);color:#fff;border-color:var(--c2);box-shadow:0 4px 14px rgba(26,60,94,.22)}
+.sal-tab:hover:not(.on){background:#f0f4ff;border-color:var(--c3);color:var(--c2)}
 /* Meta fields */
 .qt-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:16px;background:#fff}
 .qt-mf{padding:12px 16px;text-align:center;border-left:1.5px solid #e2e8f0;background:#fff;transition:.15s}
@@ -535,6 +538,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
     <div class="ni" id="n-sup" onclick="go('sup')"><span class="nic">🏢</span>الموردون</div>
     <div class="ni" id="n-arc" onclick="go('arc')"><span class="nic">🗂</span>الأرشيف الشهري</div>
     <div class="ni" id="n-srch" onclick="go('srch')"><span class="nic">🔍</span>البحث المتقدم</div>
+    <div class="nsec">المبيعات</div>
+    <div class="ni" id="n-sales" onclick="go('sales')"><span class="nic">🛍</span>المبيعات</div>
     <div class="nsec">العملاء</div>
     <div class="ni" id="n-quote" onclick="go('quote')"><span class="nic">📋</span>عروض الأسعار</div>
     <div class="nsec">التصدير والنظام</div>
@@ -833,6 +838,134 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
     </div>
 
     <!-- DOWNLOADS -->
+    <!-- SALES PAGE -->
+    <div class="page" id="page-sales">
+      <!-- KPI cards -->
+      <div class="mcrow" id="salMcs"></div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+        <button class="btn sal-tab on" id="stab1" onclick="switchSTab(1)">➕ إضافة طلب</button>
+        <button class="btn sal-tab" id="stab2" onclick="switchSTab(2)">📂 استيراد من سلة</button>
+        <button class="btn sal-tab" id="stab3" onclick="switchSTab(3)">📋 جميع الطلبات</button>
+        <button class="btn sal-tab" id="stab4" onclick="switchSTab(4)">📊 تقارير شهرية</button>
+      </div>
+
+      <!-- Tab 1: Add order -->
+      <div id="spane1">
+        <div class="card">
+          <div class="ch"><h3 id="salFormTitle">➕ إضافة طلب مبيعات</h3></div>
+          <div class="cb">
+            <div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+              <div class="fi"><label>رقم الطلب</label><input class="si" id="salNum" placeholder="مثال: 100001"></div>
+              <div class="fi"><label>تاريخ الطلب</label><input class="si" type="date" id="salDate"></div>
+              <div class="fi"><label>اسم العميل</label><input class="si" id="salCust" placeholder="اختياري"></div>
+              <div class="fi"><label>المدينة</label><input class="si" id="salCity" placeholder="اختياري"></div>
+            </div>
+            <div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-top:10px">
+              <div class="fi"><label>إجمالي الطلب (قبل الضريبة)</label><input class="si" type="number" id="salAmt" placeholder="0.00" min="0" step="0.01" oninput="calcSalTax()"></div>
+              <div class="fi"><label>الضريبة 15%</label><input class="si" type="number" id="salTax" placeholder="0.00" min="0" step="0.01" readonly style="background:#f8fafc;color:var(--mu)"></div>
+              <div class="fi"><label>الإجمالي شامل الضريبة</label><input class="si" type="number" id="salTotal" placeholder="0.00" min="0" step="0.01" readonly style="background:#f8fafc;font-weight:900;color:var(--c2)"></div>
+              <div class="fi"><label>طريقة الدفع</label>
+                <select class="si" id="salPay">
+                  <option value="بطاقة">بطاقة ائتمان</option>
+                  <option value="مدى">مدى</option>
+                  <option value="تحويل">تحويل بنكي</option>
+                  <option value="نقد">نقد</option>
+                  <option value="سلة">سلة Pay</option>
+                  <option value="أخرى">أخرى</option>
+                </select>
+              </div>
+            </div>
+            <div class="fg" style="grid-template-columns:1fr;margin-top:10px">
+              <div class="fi"><label>المنتجات / ملاحظات</label><textarea class="si" id="salDesc" rows="2" placeholder="أسماء المنتجات أو ملاحظة..." style="resize:vertical"></textarea></div>
+            </div>
+            <div class="fi" style="margin-top:10px">
+              <label>الحالة</label>
+              <select class="si" id="salStatus" style="max-width:200px">
+                <option value="مكتمل">✅ مكتمل</option>
+                <option value="معلق">⏳ معلق</option>
+                <option value="ملغي">❌ ملغي</option>
+                <option value="مسترجع">↩ مسترجع</option>
+              </select>
+            </div>
+            <div class="fac" style="margin-top:16px">
+              <button class="btn" onclick="rstSal()">إلغاء</button>
+              <button class="btn bp" onclick="savSal()"><span id="salSaveLbl">💾 حفظ الطلب</span></button>
+            </div>
+            <div class="toast ok" id="salToast" style="margin-top:10px;display:none">✅ تم حفظ الطلب</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Import from Salla -->
+      <div id="spane2" style="display:none">
+        <div class="card">
+          <div class="ch"><h3>📂 استيراد طلبات سلة</h3></div>
+          <div class="cb">
+            <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:#1e40af;line-height:2">
+              <strong>📋 كيف تصدّر طلباتك من سلة؟</strong><br>
+              1. افتح لوحة تحكم سلة ← <strong>الطلبات</strong><br>
+              2. اضغط <strong>تصدير</strong> في أعلى الصفحة<br>
+              3. اختر <strong>Excel (.xlsx)</strong> وحدد الفترة الزمنية<br>
+              4. ارفع الملف هنا ↓
+            </div>
+            <div id="salImportZone" onclick="document.getElementById('salFileInp').click()"
+              style="border:2px dashed var(--bd);border-radius:12px;padding:40px;text-align:center;cursor:pointer;background:var(--bd2);transition:.2s"
+              ondragover="event.preventDefault();this.style.borderColor='var(--c3)'"
+              ondragleave="this.style.borderColor='var(--bd)'"
+              ondrop="handleSalDrop(event)">
+              <div style="font-size:40px;margin-bottom:10px">📊</div>
+              <div style="font-size:14px;font-weight:800;color:var(--c2);margin-bottom:4px">اسحب ملف Excel هنا أو اضغط للرفع</div>
+              <div style="font-size:12px;color:var(--mu)">.xlsx — تصدير طلبات سلة</div>
+            </div>
+            <input type="file" id="salFileInp" accept=".xlsx,.xls,.csv" style="display:none" onchange="importSallaFile(this)">
+            <div id="salImportPrev" style="display:none;margin-top:16px">
+              <div class="ch" style="margin-bottom:10px">
+                <h3 id="salImportCount"></h3>
+                <div style="display:flex;gap:8px">
+                  <button class="btn bp" onclick="confirmSalImport()">✅ استيراد الكل</button>
+                  <button class="btn brd sm" onclick="document.getElementById('salImportPrev').style.display='none'">إلغاء</button>
+                </div>
+              </div>
+              <div class="tscr"><table class="tbl" id="salImportTbl"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th></tr></thead><tbody id="salImportBody"></tbody></table></div>
+            </div>
+            <div id="salImportMsg" style="margin-top:12px;font-size:13px;font-weight:700"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: All orders -->
+      <div id="spane3" style="display:none">
+        <div class="card">
+          <div class="ch">
+            <h3>📋 جميع الطلبات</h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input class="si" id="salSrch" placeholder="🔍 بحث..." style="max-width:180px;padding:6px 12px;font-size:13px" oninput="renderSalList()">
+              <select class="si" id="salSrchStatus" style="max-width:140px;padding:6px 10px;font-size:13px" onchange="renderSalList()">
+                <option value="">كل الحالات</option>
+                <option value="مكتمل">✅ مكتمل</option>
+                <option value="معلق">⏳ معلق</option>
+                <option value="ملغي">❌ ملغي</option>
+                <option value="مسترجع">↩ مسترجع</option>
+              </select>
+              <span id="salCount" style="font-size:12px;color:var(--mu);font-weight:700;background:var(--bd2);padding:3px 11px;border-radius:20px"></span>
+            </div>
+          </div>
+          <div class="cb np">
+            <div class="tscr"><table class="tbl"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>العميل</th><th>المدينة</th><th>الإجمالي</th><th>الضريبة</th><th>الحالة</th><th>الدفع</th><th></th></tr></thead><tbody id="salBody"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Monthly reports -->
+      <div id="spane4" style="display:none">
+        <div class="card"><div class="ch"><h3>📊 تقارير المبيعات الشهرية</h3></div>
+          <div class="cb" id="salRepBody"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="page" id="page-dl"><div id="dlCnt"></div></div>
 
     <!-- SETTINGS -->
@@ -1358,7 +1491,7 @@ function smMap(list) {
 // ══════════════════════════════════════════════
 // NAV
 // ══════════════════════════════════════════════
-const PN = {dash:'لوحة التحكم',profit:'الأرباح والخسائر',exp:'المصروفات',rep:'التقارير الربعية',tax:'الضريبة (VAT)',sup:'الموردون',arc:'الأرشيف الشهري',srch:'البحث المتقدم',quote:'عروض الأسعار',dl:'التحميلات',set:'الإعدادات'};
+const PN = {dash:'لوحة التحكم',profit:'الأرباح والخسائر',exp:'المصروفات',rep:'التقارير الربعية',tax:'الضريبة (VAT)',sup:'الموردون',arc:'الأرشيف الشهري',srch:'البحث المتقدم',sales:'المبيعات',quote:'عروض الأسعار',dl:'التحميلات',set:'الإعدادات'};
 
 function go(p) {
   document.querySelectorAll('.page').forEach(e => e.classList.remove('on'));
@@ -1372,7 +1505,7 @@ function go(p) {
   const rs = {
     dash: rDash, profit: rProfit, exp: rExp, rep: rRep, tax: rVAT,
     sup: rSup, arc: rArc, srch: () => { document.getElementById('srNote').textContent=`نطاق البحث: عام ${getY()}`; },
-    quote: rQuote, dl: rDL, set: rSet
+    sales: rSales, quote: rQuote, dl: rDL, set: rSet
   };
   if (rs[p]) rs[p]();
   // عرض المسودة عند فتح صفحة المصروفات
@@ -2607,6 +2740,282 @@ function renderQReports() {
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.ctrlKey && curPage === 'exp') { e.preventDefault(); savB(); }
 });
+
+// ══════════════════════════════════════════════
+// SALES
+// ══════════════════════════════════════════════
+let sales    = JSON.parse(localStorage.getItem('sales_orders') || '[]');
+let salEditId = null;
+let salImportBuf = []; // pending import rows
+
+function saveSales() { localStorage.setItem('sales_orders', JSON.stringify(sales)); }
+
+// ── Routing ──
+function rSales() {
+  renderSalKPI();
+  renderSalList();
+  renderSalReports();
+  switchSTab(1);
+  const d = document.getElementById('salDate');
+  if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+// ── Tabs ──
+function switchSTab(n) {
+  [1,2,3,4].forEach(i => {
+    document.getElementById('spane'+i).style.display = i===n?'block':'none';
+    document.getElementById('stab'+i).classList.toggle('on', i===n);
+  });
+  if (n===3) renderSalList();
+  if (n===4) renderSalReports();
+}
+
+// ── Tax calc ──
+function calcSalTax() {
+  const amt  = parseFloat(document.getElementById('salAmt').value) || 0;
+  const tax  = amt * 0.15;
+  const tot  = amt + tax;
+  document.getElementById('salTax').value   = tax.toFixed(2);
+  document.getElementById('salTotal').value = tot.toFixed(2);
+}
+
+// ── Save ──
+function savSal() {
+  const num    = document.getElementById('salNum').value.trim();
+  const date   = document.getElementById('salDate').value;
+  const cust   = document.getElementById('salCust').value.trim();
+  const city   = document.getElementById('salCity').value.trim();
+  const amt    = parseFloat(document.getElementById('salAmt').value) || 0;
+  const tax    = parseFloat(document.getElementById('salTax').value) || 0;
+  const total  = parseFloat(document.getElementById('salTotal').value) || 0;
+  const pay    = document.getElementById('salPay').value;
+  const desc   = document.getElementById('salDesc').value.trim();
+  const status = document.getElementById('salStatus').value;
+  if (!date)  { alert('يرجى تحديد تاريخ الطلب'); return; }
+  if (!amt)   { alert('يرجى إدخال مبلغ الطلب'); return; }
+  const order = { id: salEditId||Date.now().toString(), num, date, cust, city, amt, tax, total, pay, desc, status, src:'manual' };
+  if (salEditId) {
+    const idx = sales.findIndex(s=>s.id===salEditId);
+    if (idx!==-1) sales[idx]=order; else sales.unshift(order);
+    salEditId = null;
+  } else { sales.unshift(order); }
+  saveSales();
+  rstSal();
+  renderSalKPI(); renderSalList(); renderSalReports();
+  const t = document.getElementById('salToast');
+  t.style.display='flex'; setTimeout(()=>t.style.display='none',2500);
+}
+
+function rstSal() {
+  salEditId = null;
+  ['salNum','salCust','salCity','salAmt','salTax','salTotal','salDesc'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const d=document.getElementById('salDate'); if(d) d.value=new Date().toISOString().split('T')[0];
+  const p=document.getElementById('salPay'); if(p) p.value='بطاقة';
+  const st=document.getElementById('salStatus'); if(st) st.value='مكتمل';
+  document.getElementById('salFormTitle').textContent='➕ إضافة طلب مبيعات';
+  document.getElementById('salSaveLbl').textContent='💾 حفظ الطلب';
+}
+
+function editSal(id) {
+  const o=sales.find(s=>s.id===id); if(!o) return;
+  salEditId=id;
+  const set=(elId,v)=>{const el=document.getElementById(elId);if(el)el.value=v||'';};
+  set('salNum',o.num); set('salDate',o.date); set('salCust',o.cust); set('salCity',o.city);
+  set('salAmt',o.amt); set('salTax',o.tax); set('salTotal',o.total);
+  set('salPay',o.pay); set('salDesc',o.desc); set('salStatus',o.status);
+  document.getElementById('salFormTitle').textContent='✏ تعديل الطلب';
+  document.getElementById('salSaveLbl').textContent='💾 حفظ التعديلات';
+  switchSTab(1);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function delSal(id) {
+  if(!confirm('حذف هذا الطلب نهائياً؟')) return;
+  sales=sales.filter(s=>s.id!==id);
+  saveSales(); renderSalKPI(); renderSalList(); renderSalReports();
+}
+
+// ── KPI ──
+function renderSalKPI() {
+  const y = getY();
+  const yi = sales.filter(s=>s.date&&s.date.startsWith(y)&&s.status!=='ملغي'&&s.status!=='مسترجع');
+  const tot   = yi.reduce((s,o)=>s+(o.total||0),0);
+  const tax   = yi.reduce((s,o)=>s+(o.tax||0),0);
+  const cnt   = yi.length;
+  const avg   = cnt ? tot/cnt : 0;
+  const el = document.getElementById('salMcs'); if(!el) return;
+  el.innerHTML = `
+    <div class="mc gr"><div class="mcs"></div><span class="mci">💰</span><div class="mcl">إجمالي المبيعات ${y}</div><div class="mcv">${fmt(tot)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">شامل الضريبة</div></div>
+    <div class="mc bl"><div class="mcs"></div><span class="mci">🛍</span><div class="mcl">عدد الطلبات</div><div class="mcv">${cnt}</div><div class="mcsub">لعام ${y}</div></div>
+    <div class="mc am"><div class="mcs"></div><span class="mci">📊</span><div class="mcl">متوسط قيمة الطلب</div><div class="mcv">${fmt(avg)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">لعام ${y}</div></div>
+    <div class="mc rd"><div class="mcs"></div><span class="mci">🧾</span><div class="mcl">إجمالي الضريبة</div><div class="mcv">${fmt(tax)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">ضريبة المخرجات</div></div>`;
+}
+
+// ── List ──
+function renderSalList() {
+  const el=document.getElementById('salBody'); if(!el) return;
+  const srch=(document.getElementById('salSrch')?.value||'').toLowerCase();
+  const stf=document.getElementById('salSrchStatus')?.value||'';
+  let list=[...sales];
+  if(srch) list=list.filter(o=>(o.num||'').includes(srch)||(o.cust||'').toLowerCase().includes(srch)||(o.desc||'').toLowerCase().includes(srch));
+  if(stf)  list=list.filter(o=>o.status===stf);
+  list.sort((a,b)=>b.date?.localeCompare(a.date));
+  const cnt=document.getElementById('salCount'); if(cnt) cnt.textContent=list.length+' طلب';
+  const stBadge={مكتمل:'<span style="color:#059669;font-weight:800">✅ مكتمل</span>',معلق:'<span style="color:#d97706;font-weight:800">⏳ معلق</span>',ملغي:'<span style="color:#dc2626;font-weight:800">❌ ملغي</span>',مسترجع:'<span style="color:#7c3aed;font-weight:800">↩ مسترجع</span>'};
+  el.innerHTML = list.length ? list.map(o=>`
+    <tr>
+      <td style="font-weight:800;color:var(--c2)">${o.num||'—'}</td>
+      <td>${o.date||'—'}</td>
+      <td>${o.cust||'—'}</td>
+      <td>${o.city||'—'}</td>
+      <td style="font-weight:900;color:var(--g)">${fmt(o.total)} ر.س</td>
+      <td style="color:var(--r)">${fmt(o.tax)} ر.س</td>
+      <td>${stBadge[o.status]||o.status}</td>
+      <td style="font-size:11px;color:var(--mu)">${o.pay||'—'}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn bp sm" onclick="editSal('${o.id}')">✏</button>
+        <button class="btn brd sm" onclick="delSal('${o.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('')
+  : '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--mu)">لا توجد طلبات</td></tr>';
+}
+
+// ── Monthly reports ──
+function renderSalReports() {
+  const el=document.getElementById('salRepBody'); if(!el) return;
+  if(!sales.length){el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--mu)">لا توجد طلبات</div>';return;}
+  const groups={};
+  sales.filter(o=>o.status!=='ملغي'&&o.status!=='مسترجع').forEach(o=>{
+    const key=(o.date||'').slice(0,7);
+    if(!groups[key]) groups[key]={list:[],tot:0,tax:0};
+    groups[key].list.push(o); groups[key].tot+=o.total||0; groups[key].tax+=o.tax||0;
+  });
+  const sorted=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+  el.innerHTML=sorted.map(key=>{
+    const g=groups[key];
+    const [yr,mo]=key.split('-');
+    const mName=new Date(+yr,+mo-1,1).toLocaleDateString('ar-SA',{month:'long',year:'numeric'});
+    return `<div class="qt-rep-card">
+      <div class="qt-rep-hdr">
+        <div><div class="rhmn">${mName}</div><div class="rhst">${g.list.length} طلب</div></div>
+        <div class="rhtot">${fmt(g.tot)} ر.س</div>
+      </div>
+      <div style="padding:10px 18px;display:flex;gap:20px;flex-wrap:wrap;font-size:12.5px;color:var(--mu)">
+        <span>الضريبة: <strong style="color:var(--r)">${fmt(g.tax)} ر.س</strong></span>
+        <span>قبل الضريبة: <strong style="color:var(--c2)">${fmt(g.tot-g.tax)} ر.س</strong></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Salla Excel Import ──
+function handleSalDrop(e) {
+  e.preventDefault();
+  document.getElementById('salImportZone').style.borderColor='var(--bd)';
+  const file=e.dataTransfer.files[0]; if(!file) return;
+  parseSallaFile(file);
+}
+function importSallaFile(inp) {
+  const file=inp.files[0]; if(!file) return;
+  parseSallaFile(file);
+}
+function parseSallaFile(file) {
+  const msg=document.getElementById('salImportMsg');
+  msg.textContent='جاري قراءة الملف...'; msg.style.color='var(--c2)';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try {
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){msg.textContent='الملف فارغ أو غير مدعوم';msg.style.color='var(--r)';return;}
+      // Map Salla columns (flexible matching)
+      const mapCol=(row,keys)=>{
+        for(const k of keys){
+          for(const rk of Object.keys(row)){
+            if(rk.includes(k)||k.includes(rk)) return String(row[rk]||'').trim();
+          }
+        }
+        return '';
+      };
+      salImportBuf=rows.map((row,i)=>({
+        id: Date.now().toString()+i,
+        num:  mapCol(row,['رقم الطلب','order_id','Order ID','order','#']),
+        date: parseExcelDate(mapCol(row,['تاريخ','date','Date','created'])),
+        cust: mapCol(row,['اسم العميل','customer','Customer','client','الاسم']),
+        city: mapCol(row,['المدينة','city','City','مدينة']),
+        amt:  parseFloat(mapCol(row,['الإجمالي قبل','subtotal','sub','المجموع قبل']))||
+              parseFloat(mapCol(row,['total','الإجمالي','المجموع']))/1.15||0,
+        tax:  parseFloat(mapCol(row,['ضريبة','tax','VAT','vat']))||0,
+        total:parseFloat(mapCol(row,['الإجمالي','total','Total','المبلغ']))||0,
+        pay:  mapCol(row,['الدفع','payment','Payment','طريقة'])||'سلة',
+        desc: mapCol(row,['المنتج','product','items','بضاعة','وصف'])||'',
+        status: mapSallaStatus(mapCol(row,['الحالة','status','Status'])),
+        src: 'salla'
+      })).filter(o=>o.total>0||o.amt>0);
+      // fix totals if missing
+      salImportBuf=salImportBuf.map(o=>{
+        if(!o.total&&o.amt) o.total=o.amt*1.15;
+        if(!o.tax&&o.amt)   o.tax=o.amt*0.15;
+        if(!o.amt&&o.total) o.amt=o.total/1.15;
+        return o;
+      });
+      showSalImportPreview();
+      msg.textContent='';
+    } catch(err){ msg.textContent='خطأ في قراءة الملف: '+err.message; msg.style.color='var(--r)'; }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function parseExcelDate(v) {
+  if(!v) return '';
+  // Excel serial number
+  if(!isNaN(v)&&+v>10000) {
+    const d=new Date(Math.round((+v-25569)*86400*1000));
+    return d.toISOString().split('T')[0];
+  }
+  // Try parse string
+  const d=new Date(v);
+  if(!isNaN(d)) return d.toISOString().split('T')[0];
+  return v.slice(0,10)||'';
+}
+function mapSallaStatus(s) {
+  const m={'completed':'مكتمل','complete':'مكتمل','مكتمل':'مكتمل','delivered':'مكتمل','pending':'معلق','معلق':'معلق','processing':'معلق','canceled':'ملغي','cancelled':'ملغي','ملغي':'ملغي','refunded':'مسترجع','مسترجع':'مسترجع'};
+  return m[(s||'').toLowerCase()]||'مكتمل';
+}
+function showSalImportPreview() {
+  const prev=document.getElementById('salImportPrev');
+  const body=document.getElementById('salImportBody');
+  const cnt =document.getElementById('salImportCount');
+  if(cnt) cnt.textContent=`تم قراءة ${salImportBuf.length} طلب — تحقق قبل الاستيراد`;
+  body.innerHTML=salImportBuf.slice(0,50).map(o=>`
+    <tr>
+      <td style="font-weight:800">${o.num||'—'}</td>
+      <td>${o.date||'—'}</td>
+      <td>${o.cust||'—'}</td>
+      <td style="font-weight:900;color:var(--g)">${fmt(o.total)} ر.س</td>
+      <td>${o.status}</td>
+    </tr>`).join('');
+  if(salImportBuf.length>50) body.innerHTML+=`<tr><td colspan="5" style="text-align:center;color:var(--mu);padding:8px">... و ${salImportBuf.length-50} طلب آخر</td></tr>`;
+  prev.style.display='block';
+}
+function confirmSalImport() {
+  if(!salImportBuf.length) return;
+  const existNums=new Set(sales.map(s=>s.num));
+  let added=0, skipped=0;
+  salImportBuf.forEach(o=>{
+    if(o.num&&existNums.has(o.num)){ skipped++; return; }
+    sales.unshift(o); added++;
+  });
+  saveSales();
+  salImportBuf=[];
+  document.getElementById('salImportPrev').style.display='none';
+  document.getElementById('salImportMsg').textContent=`✅ تم استيراد ${added} طلب${skipped?` (تم تجاهل ${skipped} مكرر)`:''}`;
+  document.getElementById('salImportMsg').style.color='var(--g)';
+  renderSalKPI(); renderSalList(); renderSalReports();
+  setTimeout(()=>switchSTab(3),1200);
+}
 
 // ── Service Worker (PWA) — مع تحديث تلقائي ──
 if ('serviceWorker' in navigator) {
