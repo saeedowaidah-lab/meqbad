@@ -2395,156 +2395,143 @@ function openQPrintWindow(q) {
   document.getElementById('qtPrintContent').innerHTML = `
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap');
-#qtPrintContent{background:#f1f5f9;max-width:900px;margin:0 auto;direction:rtl;padding:32px 20px}
-#qtPrintContent *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','IBM Plex Sans Arabic',sans-serif}
-/* ── Page wrapper ── */
-.qpage{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}
-/* ── Header ── */
-/* ── Title band (top center) ── */
-.qtband{background:linear-gradient(90deg,#0d1b3e,#1a3461,#0d1b3e);padding:12px 32px;text-align:center}
-.qtband-main{color:#e8b84b;font-size:16px;font-weight:900;letter-spacing:1px;display:block}
-.qtband-sub{color:rgba(255,255,255,.5);font-size:11px;font-weight:600;display:block;margin-top:2px}
-/* ── Header (logo + company info side by side) ── */
-.qhdr{background:linear-gradient(135deg,#0d1b3e 0%,#1a3461 60%,#0f2550 100%);padding:22px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.qhdr-left{flex-shrink:0}
-.qhdr-info{flex:1;min-width:0}
-.qco-badge{display:inline-block;background:rgba(200,153,42,.18);border:1px solid rgba(200,153,42,.45);color:#e8b84b;font-size:9px;font-weight:800;letter-spacing:.8px;padding:3px 10px;border-radius:20px;margin-bottom:8px;text-transform:uppercase}
-.qco h2{font-size:17px;font-weight:900;color:#fff;margin-bottom:7px;line-height:1.35}
-.qco p{font-size:10px;color:rgba(255,255,255,.65);line-height:2.1}
-.qlg{background:linear-gradient(135deg,#c8992a,#e8b84b);border-radius:14px;padding:14px 22px;text-align:center;min-width:96px;flex-shrink:0;box-shadow:0 4px 18px rgba(200,153,42,.4)}
-.qlge{color:#0d1b3e;font-size:24px;font-weight:900;display:block;letter-spacing:.5px}
-.qlga{color:rgba(13,27,62,.6);font-size:10px;display:block;margin-top:4px;font-weight:700}
-/* ── Body padding ── */
-.qbody{padding:24px 28px;display:flex;flex-direction:column;gap:20px}
-/* ── Meta boxes ── */
-.qmeta{display:flex;gap:12px;flex-wrap:wrap}
-.qmb{flex:1;min-width:110px;border:1.5px solid #e2e8f0;border-radius:11px;padding:12px 16px;text-align:center;background:#f8fafc}
-.qmbl{font-size:8.5px;color:#64748b;font-weight:800;letter-spacing:.5px;display:block;margin-bottom:5px;text-transform:uppercase}
-.qmbv{font-size:15px;font-weight:900;color:#0d1b3e;display:block}
-/* ── Divider ── */
-.qdiv{height:1px;background:linear-gradient(90deg,#e2e8f0,#cbd5e1,#e2e8f0)}
-/* ── Customer ── */
-.qcust{background:linear-gradient(90deg,#eff6ff,#f0f9ff);border-right:4px solid #1a3461;border-radius:0 11px 11px 0;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.qcl{font-size:11px;font-weight:900;color:#1a3461;white-space:nowrap}
-.qcv{font-size:18px;font-weight:900;color:#0d1b3e}
-/* ── Table ── */
-.qtwrap{overflow-x:auto;border-radius:11px;border:1.5px solid #e2e8f0}
-.qtwrap table{width:100%;border-collapse:collapse;min-width:480px}
-.qtwrap thead th{background:linear-gradient(180deg,#1a3461,#0d1b3e);color:#fff;padding:12px 10px;font-size:11px;font-weight:800;text-align:center;border-bottom:2px solid #0f2550}
-.qtwrap th.qdesc,.qtwrap td.qdesc{text-align:right}
-.qtwrap thead th.qdesc{text-align:right}
-.qtwrap tbody td{padding:11px 10px;border-bottom:1px solid #f1f5f9;font-size:12.5px;text-align:center;vertical-align:middle;color:#1e293b}
-.qtwrap tbody td.qdesc{font-weight:700;color:#0d1b3e}
-.qtwrap tbody tr:nth-child(even){background:#f8fafc}
-.qtwrap tbody tr:last-child td{border-bottom:none}
-.qtwrap tbody tr td:first-child{background:linear-gradient(180deg,#1a3461,#0d1b3e);color:#e8b84b;font-weight:900;font-size:12px;width:40px}
-/* ── Bottom section ── */
-.qbottom{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
-/* ── Bank ── */
-.qbank{flex:1;min-width:200px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:11px;padding:16px 20px;direction:rtl}
-.qbank-title{font-size:10px;color:#94a3b8;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e2e8f0}
-.qbank-row{display:flex;flex-direction:column;gap:6px}
-.qbank-label{font-size:9.5px;color:#64748b;font-weight:800;letter-spacing:.3px}
-.qbank-val{font-size:13px;font-weight:900;color:#0d1b3e;letter-spacing:.4px;margin-top:2px}
-/* ── Totals ── */
-.qtots{flex-shrink:0;min-width:270px}
-.qtotb{border:1.5px solid #e2e8f0;border-radius:11px;overflow:hidden;background:#fff}
-.qtrow{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;gap:20px;direction:rtl}
-.qtrow:last-child{border-bottom:none;background:linear-gradient(135deg,#0d1b3e,#1a3461);padding:14px 16px}
-.qtl{color:#64748b;font-weight:700}
-.qtv{font-weight:900;color:#0d1b3e}
-.qtrow:last-child .qtl{color:rgba(255,255,255,.75);font-size:13px}
-.qtrow:last-child .qtv{color:#e8b84b;font-size:20px;font-weight:900}
-/* ── Notes ── */
-.qnotes-sec{background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 18px;direction:rtl}
-.qnotes-title{font-size:11px;font-weight:900;color:#92400e;letter-spacing:.4px;margin-bottom:10px}
-.qnotes-list{padding-right:20px;margin:0;display:flex;flex-direction:column;gap:7px}
-.qnotes-list li{font-size:12.5px;color:#78350f;line-height:1.65;padding-right:4px}
-/* ── Footer ── */
-.qftr{background:linear-gradient(90deg,#0d1b3e,#1a3461);padding:14px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
-.qftr-txt{color:rgba(255,255,255,.5);font-size:10px}
-.qftr-brand{color:#e8b84b;font-size:11px;font-weight:900;letter-spacing:.3px}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'IBM Plex Sans Arabic',sans-serif}
+.qpg{background:#fff;direction:rtl;padding:28px 32px;max-width:900px;margin:0 auto;color:#111}
+/* ── TOP HEADER ── */
+.qh{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:18px;border-bottom:2px solid #111}
+.qh-logo{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+.qh-logo img{width:90px;height:90px;object-fit:contain}
+.qh-logo-txt{font-size:13px;font-weight:900;color:#111;letter-spacing:.5px}
+.qh-co{text-align:right}
+.qh-co h1{font-size:20px;font-weight:900;color:#111;margin-bottom:8px;line-height:1.3}
+.qh-co p{font-size:10.5px;color:#444;line-height:2;text-align:right}
+.qh-co a{color:#1a3c5e;text-decoration:none}
+/* ── META + CUSTOMER ROW ── */
+.qmrow{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:16px 0;border-bottom:1.5px solid #ddd}
+.qmeta-blk{display:flex;flex-direction:column;gap:7px}
+.qml{display:flex;align-items:center;gap:8px;font-size:12px}
+.qml-label{color:#555;font-weight:700;white-space:nowrap}
+.qml-val{font-weight:900;color:#111;font-size:13px}
+.qcust-blk{text-align:right;border-right:3px solid #f59e0b;padding-right:12px}
+.qcust-lbl{font-size:10px;color:#888;font-weight:800;margin-bottom:5px}
+.qcust-nm{font-size:15px;font-weight:900;color:#111}
+/* ── TABLE ── */
+.qtbl{width:100%;border-collapse:collapse;margin:18px 0 0}
+.qtbl thead th{background:#f59e0b;color:#111;padding:10px 10px;font-size:11px;font-weight:900;text-align:center;border:1px solid #e0a800}
+.qtbl thead th:first-child{text-align:right}
+.qtbl tbody td{padding:9px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:center;color:#111;vertical-align:middle}
+.qtbl tbody td:first-child{text-align:right;font-weight:600}
+.qtbl tbody tr:nth-child(even){background:#fafafa}
+.qtbl tfoot td{padding:9px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:center;color:#111}
+.qtbl tfoot tr.tot-row td{font-weight:700;background:#f9fafb}
+.qtbl tfoot tr.tot-final td{font-weight:900;background:#111;color:#f59e0b;font-size:13px}
+.tot-lbl{text-align:right !important;font-weight:700}
+/* ── BOTTOM ── */
+.qbtm{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:22px;padding-top:16px;border-top:1.5px solid #ddd}
+.qbank-blk{font-size:11.5px;color:#444;line-height:2;direction:rtl}
+.qbank-blk strong{color:#111;font-weight:900}
+.qsig{width:160px;height:60px;border:1.5px solid #bbb;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.qsig-lbl{font-size:10px;color:#aaa;font-weight:700}
+/* ── NOTES ── */
+.qnotes-blk{margin-top:16px;padding:12px 16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px}
+.qnotes-blk-ttl{font-size:11px;font-weight:900;color:#92400e;margin-bottom:8px}
+.qnotes-blk ol{padding-right:18px;font-size:12px;color:#78350f;line-height:1.9}
 </style>
-<div class="qpage">
-<div class="qtband">
-  <span class="qtband-main">عـرض سعـر</span>
-  <span class="qtband-sub">Price Quotation</span>
-</div>
-<div class="qhdr">
-  <div class="qhdr-left">${logoBox}</div>
-  <div class="qhdr-info">
-    <div class="qco">
-      <div class="qco-badge">مؤسسة تجارية مسجلة</div>
-      <h2>مؤسسة المقبض الاسود التجارية</h2>
+<div class="qpg">
+
+  <!-- Header -->
+  <div class="qh">
+    <div class="qh-logo">
+      ${logoB64
+        ? `<img src="${logoB64}" alt="logo">`
+        : `<div style="width:90px;height:90px;background:#f1f5f9;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px">🏪</div>`}
+      <span class="qh-logo-txt">Meqbad</span>
+    </div>
+    <div class="qh-co">
+      <h1>مؤسسة المقبض الاسود التجارية</h1>
       <p>
-        الرقم الضريبي: 302210041700003 &nbsp;|&nbsp; السجل التجاري: 1009151735<br>
+        الرقم الضريبي : 302210041700003 &nbsp;|&nbsp; السجل التجاري : 1009151735<br>
         350، الرياض، المملكة العربية السعودية - 12694<br>
-        Tel: +966 53 223 6848 &nbsp;|&nbsp; info@meqbad.com &nbsp;|&nbsp; meqbad.com
+        website | موقعنا: <a href="#">meqbad.com</a> &nbsp; Email: info@meqbad.com<br>
+        966 53 223 6848
       </p>
     </div>
   </div>
-</div>
-<div class="qbody">
-  <div class="qmeta">
-    <div class="qmb"><span class="qmbl">رقم العرض / Quote No.</span><span class="qmbv">${q.num||'—'}</span></div>
-    <div class="qmb"><span class="qmbl">تاريخ الإصدار / Date</span><span class="qmbv">${q.date||'—'}</span></div>
-    <div class="qmb"><span class="qmbl">صلاحية العرض / Valid Until</span><span class="qmbv">7 أيام</span></div>
-  </div>
-  <div class="qdiv"></div>
-  <div class="qcust">
-    <span class="qcl">المرسل إليه / Prepared For:</span>
-    <span class="qcv">${q.customer||'...'}</span>
-  </div>
-  <div class="qtwrap">
-    <table>
-      <thead><tr>
-        <th style="width:5%">#</th>
-        <th class="qdesc" style="width:38%">وصف الخدمة / السلعة<br><small style="opacity:.7;font-weight:600">Description</small></th>
-        <th style="width:9%">الكمية<br><small style="opacity:.7;font-weight:600">Qty</small></th>
-        <th style="width:14%">السعر<br><small style="opacity:.7;font-weight:600">Unit Price</small></th>
-        <th style="width:17%">الإجمالي<br><small style="opacity:.7;font-weight:600">Subtotal</small></th>
-        <th style="width:17%">مع ضريبة 15%<br><small style="opacity:.7;font-weight:600">Inc. VAT</small></th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>
-  <div class="qdiv"></div>
-  ${(q.notes&&q.notes.filter(Boolean).length) ? `
-  <div class="qnotes-sec">
-    <div class="qnotes-title">📝 ملاحظات</div>
-    <ol class="qnotes-list">
-      ${q.notes.filter(Boolean).map(n=>`<li>${n}</li>`).join('')}
-    </ol>
-  </div>
-  <div class="qdiv"></div>` : ''}
-  <div class="qbottom">
-    <div class="qbank">
-      <div class="qbank-title">🏦 تفاصيل الحساب البنكي</div>
-      <div class="qbank-row">
-        <div>
-          <div class="qbank-label">رقم الآيبان / IBAN</div>
-          <div class="qbank-val">SA0580000510608016264429</div>
-        </div>
-        <div style="margin-top:10px">
-          <div class="qbank-label">اسم البنك / Bank Name</div>
-          <div class="qbank-val">بنك الراجحي — Al Rajhi Bank</div>
-        </div>
-      </div>
+
+  <!-- Meta + Customer -->
+  <div class="qmrow">
+    <div class="qmeta-blk">
+      <div class="qml"><span class="qml-label">تاريخ الإصدار Date :</span><span class="qml-val">${q.date||'—'}</span></div>
+      <div class="qml"><span class="qml-label">ساري لمدة Valid for :</span><span class="qml-val">7 أيام Days</span></div>
+      <div class="qml"><span class="qml-label">رقم عرض السعر # :</span><span class="qml-val">${q.num||'—'}</span></div>
     </div>
-    <div class="qtots">
-      <div class="qtotb">
-        <div class="qtrow"><span class="qtl">الإجمالي قبل الضريبة</span><span class="qtv">${fmtN(q.subtotal)} ر.س</span></div>
-        ${discRow}
-        <div class="qtrow"><span class="qtl">ضريبة القيمة المضافة 15%</span><span class="qtv" style="color:#dc2626">${fmtN(q.vat)} ر.س</span></div>
-        <div class="qtrow"><span class="qtl">الإجمالي النهائي شامل الضريبة</span><span class="qtv">${fmtN(q.grandTotal)} ر.س</span></div>
-      </div>
+    <div class="qcust-blk">
+      <div class="qcust-lbl">المرسل إليه:</div>
+      <div class="qcust-nm">${q.customer||'—'}</div>
     </div>
   </div>
-</div>
-<div class="qftr">
-  <span class="qftr-txt">meqbad.com &nbsp;|&nbsp; info@meqbad.com &nbsp;|&nbsp; +966 53 223 6848</span>
-  <span class="qftr-brand">Meqbad · مقبض</span>
-</div>
+
+  <!-- Table -->
+  <table class="qtbl">
+    <thead>
+      <tr>
+        <th style="width:38%;text-align:right">وصف الخدمة / السلعة<br><span style="font-weight:600;font-size:10px">Product</span></th>
+        <th style="width:10%">الكمية<br><span style="font-weight:600;font-size:10px">Quantity</span></th>
+        <th style="width:14%">السعر<br><span style="font-weight:600;font-size:10px">Price</span></th>
+        <th style="width:19%">إجمالي التكلفة<br><span style="font-weight:600;font-size:10px">Total cost</span></th>
+        <th style="width:19%">إجمالي مع الضريبة<br><span style="font-weight:600;font-size:10px">Total with VAT</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${items.map(it=>`
+      <tr>
+        <td style="text-align:right;font-weight:600">${it.desc||'—'}</td>
+        <td>${it.qty||1}</td>
+        <td>${fmtN(it.price)}</td>
+        <td>${fmtN(it.sub)}</td>
+        <td>${fmtN((it.sub||0)*1.15)}</td>
+      </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:18px">لا توجد بنود</td></tr>'}
+    </tbody>
+    <tfoot>
+      ${q.discount>0?`
+      <tr class="tot-row">
+        <td colspan="3" class="tot-lbl">الإجمالي قبل الخصم</td>
+        <td colspan="2">${fmtN(q.subtotal)}</td>
+      </tr>
+      <tr class="tot-row">
+        <td colspan="3" class="tot-lbl">خصم${q.discLabel?' ('+q.discLabel+')':''}</td>
+        <td colspan="2" style="color:#dc2626">- ${fmtN(q.discount)}</td>
+      </tr>`:''}
+      <tr class="tot-row">
+        <td colspan="3" class="tot-lbl">الاجمالي</td>
+        <td colspan="2">${fmtN(q.taxable||q.subtotal)}</td>
+      </tr>
+      <tr class="tot-row">
+        <td colspan="3" class="tot-lbl">الضريبة 15% VAT</td>
+        <td colspan="2">${fmtN(q.vat)}</td>
+      </tr>
+      <tr class="tot-final">
+        <td colspan="3" class="tot-lbl" style="color:#f59e0b">الاجمالي النهائي</td>
+        <td colspan="2">${fmtN(q.grandTotal)}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  ${(q.notes&&q.notes.filter(Boolean).length)?`
+  <div class="qnotes-blk">
+    <div class="qnotes-blk-ttl">📝 ملاحظات</div>
+    <ol>${q.notes.filter(Boolean).map(n=>`<li>${n}</li>`).join('')}</ol>
+  </div>`:''}
+
+  <!-- Bottom: Bank + Signature -->
+  <div class="qbtm">
+    <div class="qsig"><span class="qsig-lbl">التوقيع والختم</span></div>
+    <div class="qbank-blk" style="text-align:right">
+      <div><strong>الحساب البنكي:</strong> SA0580000510608016264429</div>
+      <div><strong>بنك الراجحي</strong></div>
+    </div>
+  </div>
+
 </div>`;
 
   const modal = document.getElementById('qtPrintModal');
