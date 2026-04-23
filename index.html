@@ -1071,34 +1071,33 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 // ══════════════════════════════════════════════
 const SURL = 'https://fhiqyngmfgdkaeqxxxga.supabase.co';
 const SKEY = 'sb_publishable_3xUAMT9R7QQC2nYxMYxdBw_Tuymu1p_';
-const UID  = '1f4844a6-e192-413a-b005-ecf50d59c786';
+let sessionToken = null; // set on login, used in API calls
 
+function sbH(extra={}) {
+  const tok = sessionToken || SKEY;
+  return {'apikey':SKEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json',...extra};
+}
 async function sbGet(table, params='') {
-  const r = await fetch(`${SURL}/rest/v1/${table}?${params}`, {
-    headers: {'apikey': SKEY, 'Authorization': 'Bearer '+SKEY}
-  });
+  const r = await fetch(`${SURL}/rest/v1/${table}?${params}`, {headers: sbH()});
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
 async function sbPost(table, body) {
   const r = await fetch(`${SURL}/rest/v1/${table}`, {
-    method:'POST',
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates'},
+    method:'POST', headers: sbH({'Prefer':'resolution=ignore-duplicates'}),
     body: JSON.stringify(body)
   });
   if (!r.ok) throw new Error(await r.text());
 }
 async function sbDel(table, id) {
-  const r = await fetch(`${SURL}/rest/v1/${table}?id=eq.${id}&user_id=eq.${UID}`, {
-    method:'DELETE',
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}
+  const r = await fetch(`${SURL}/rest/v1/${table}?id=eq.${id}&user_id=eq.${CU.id}`, {
+    method:'DELETE', headers: sbH()
   });
   if (!r.ok) throw new Error(await r.text());
 }
 async function sbUps(table, body) {
   const r = await fetch(`${SURL}/rest/v1/${table}`, {
-    method:'POST',
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+    method:'POST', headers: sbH({'Prefer':'resolution=merge-duplicates,return=minimal'}),
     body: JSON.stringify(body)
   });
   if (!r.ok) console.warn('upsert:', await r.text());
@@ -1121,7 +1120,7 @@ async function logAction(action, details = '') {
     : '💻 ' + (navigator.userAgent.match(/(Windows|Mac|Linux)/)?.[0] || 'كمبيوتر');
   const entry = {
     id: Date.now(),
-    user_id: UID,
+    user_id: CU.id,
     employee: employeeName || 'غير محدد',
     action,
     details: (details || '').slice(0, 300),
@@ -1143,11 +1142,7 @@ async function logAction(action, details = '') {
   }).catch(() => {}); // صامت تماماً إذا فشل
 }
 
-// Auto-login (no SDK needed)
-const SB = { auth: { onAuthStateChange: (cb) => {
-  setTimeout(()=>cb('SIGNED_IN',{user:{id:UID,email:'saeedowaidah@gmail.com'}}) ,200);
-  return {data:{subscription:{unsubscribe:()=>{}}}};
-} } };
+const SB = supabase.createClient(SURL, SKEY);
 
 // ══════════════════════════════════════════════
 // CONSTANTS
@@ -1226,7 +1221,8 @@ async function doUp() {
 }
 
 async function doOut() {
-  CU=null; invs=[]; sdata={};
+  await SB.auth.signOut();
+  CU=null; sessionToken=null; invs=[]; sdata={}; quotes=[]; sales=[];
   document.getElementById('app').style.display='none';
   document.getElementById('authWrap').style.display='flex';
   document.getElementById('aLoad').style.display='none';
@@ -1245,6 +1241,7 @@ async function sendPwR() {
 SB.auth.onAuthStateChange(async (event, session) => {
   if (session?.user) {
     CU = session.user;
+    sessionToken = session.access_token;
     document.getElementById('authWrap').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     const em = CU.email || '';
@@ -1256,7 +1253,8 @@ SB.auth.onAuthStateChange(async (event, session) => {
     if (cq >= 0) { document.getElementById('vatQ').value = cq; selQ = cq; }
     syncShow('جارٍ تحميل البيانات...', 'load');
     fetchIP();
-    await Promise.all([loadInvs(), loadSales(), loadSettings()]);
+    await Promise.all([loadInvs(), loadSales(), loadSettings(), loadQuotes(), loadSalesOrders()]);
+    await migrateLocalStorage();
     // طلب اسم الموظف إذا لم يكن محفوظاً — بشاشة أنيقة
     if (!employeeName) {
       await askEmployeeName();
@@ -1291,7 +1289,7 @@ function syncShow(msg, type) {
 async function loadInvs() {
   try {
     syncShow('جارٍ تحميل الفواتير...', 'load');
-    const data = await sbGet('invoices', `user_id=eq.${UID}&order=date.desc&limit=1000`);
+    const data = await sbGet('invoices', `user_id=eq.${CU.id}&order=date.desc&limit=1000`);
     invs = data.map(r => ({
       id:r.id, num:r.num||'', date:r.date,
       supplier:r.supplier||'', cat:r.cat||'أخرى', desc:r.description||'',
@@ -1324,7 +1322,7 @@ async function importPreload() {
 
 async function loadSales() {
   try {
-    const data = await sbGet('sales_data', `user_id=eq.${UID}`);
+    const data = await sbGet('sales_data', `user_id=eq.${CU.id}`);
     sdata = {};
     if (data && data.length > 0) {
       data.forEach(r => { sdata[r.year+'_'+r.month] = r.amount; });
@@ -1334,7 +1332,7 @@ async function loadSales() {
 
 async function loadSettings() {
   try {
-    const data = await sbGet('store_settings', `user_id=eq.${UID}`);
+    const data = await sbGet('store_settings', `user_id=eq.${CU.id}`);
     if (data && data.length > 0) {
       const d = data[0];
       const nm = d.store_name||'متجر مقبض';
@@ -1378,7 +1376,7 @@ async function savB() {
   const btn = document.getElementById('savBtn');
   btn.disabled=true; btn.textContent='⏳ جارٍ الحفظ...';
   const id = Date.now();
-  const row = {id, user_id:UID,
+  const row = {id, user_id:CU.id,
     num:num||null, date:dt,
     supplier:document.getElementById('bs').value.trim()||null,
     cat:document.getElementById('bc').value,
@@ -1443,7 +1441,7 @@ function editI(id) {
 
 async function savSd(y, m, v) {
   sdata[y+'_'+m] = v;
-  try { await sbUps('sales_data', {user_id:UID,year:y,month:m,amount:parseFloat(v)||0}); }
+  try { await sbUps('sales_data', {user_id:CU.id,year:y,month:m,amount:parseFloat(v)||0}); }
   catch(e) { console.warn('savSd:', e); }
 }
 
@@ -1457,7 +1455,7 @@ async function savSet() {
     if (ks) { ks.textContent = '✅ مفعّل'; ks.style.color='var(--g)'; }
   }
   try {
-    await sbUps('store_settings', {user_id:UID, store_name:name,
+    await sbUps('store_settings', {user_id:CU.id, store_name:name,
       vat_number:document.getElementById('sVN').value,
       manager_name:document.getElementById('sMgr').value});
     const sbn=document.getElementById('sbNm'); if(sbn) sbn.textContent=name;
@@ -2133,7 +2131,7 @@ async function loadAuditLog() {
   // ── محاولة قراءة من Supabase (إذا كان الجدول موجوداً) ──
   let sbLogs = [];
   try {
-    const data = await sbGet('audit_log', `user_id=eq.${UID}&order=created_at.desc&limit=100`);
+    const data = await sbGet('audit_log', `user_id=eq.${CU.id}&order=created_at.desc&limit=100`);
     if (Array.isArray(data)) sbLogs = data;
   } catch(e) {}
 
@@ -2197,7 +2195,7 @@ async function applyCorrections() {
   try {
     for (const c of CORRECTIONS) {
       const row = {
-        id: c.id, user_id: UID,
+        id: c.id, user_id: CU.id,
         num: c.num, date: c.date,
         supplier: c.supplier, cat: c.cat,
         description: c.desc,
@@ -2258,7 +2256,7 @@ function exVAT(){
 // ══════════════════════════════════════════════
 // PRICE QUOTES
 // ══════════════════════════════════════════════
-let quotes = JSON.parse(localStorage.getItem('price_quotes') || '[]');
+let quotes = [];
 let qEditId = null;
 let qItems  = []; // [{ id, desc, qty, price }]
 let qNextId = 1;
@@ -2404,7 +2402,12 @@ function savQ() {
   } else {
     quotes.unshift(q);
   }
-  localStorage.setItem('price_quotes', JSON.stringify(quotes));
+  sbUps('price_quotes', {
+    id:q.id, user_id:CU.id, num:q.num, date:q.date, customer:q.customer,
+    items:q.items, subtotal:q.subtotal, discount:q.discount,
+    disc_type:q.discType, disc_val:q.discVal, disc_label:q.discLabel||'',
+    taxable:q.taxable, vat:q.vat, grand_total:q.grandTotal, notes:q.notes||[]
+  });
   logAction('عرض سعر', `رقم ${num} — ${customer} — ${fmt(grandTotal)} ر.س`);
   rstQ();
   const toast = document.getElementById('qtSaveToast');
@@ -2470,7 +2473,7 @@ function editQ(id) {
 function delQ(id) {
   if(!confirm('هل تريد حذف هذا العرض نهائياً؟')) return;
   quotes = quotes.filter(x => x.id!==id);
-  localStorage.setItem('price_quotes', JSON.stringify(quotes));
+  sbDel('price_quotes', id);
   renderQList(); renderQReports();
   document.getElementById('qtCount').textContent = quotes.length + ' عرض';
 }
@@ -2744,11 +2747,9 @@ document.addEventListener('keydown', e => {
 // ══════════════════════════════════════════════
 // SALES
 // ══════════════════════════════════════════════
-let sales    = JSON.parse(localStorage.getItem('sales_orders') || '[]');
+let sales    = [];
 let salEditId = null;
-let salImportBuf = []; // pending import rows
-
-function saveSales() { localStorage.setItem('sales_orders', JSON.stringify(sales)); }
+let salImportBuf = [];
 
 // ── Routing ──
 function rSales() {
@@ -2799,7 +2800,7 @@ function savSal() {
     if (idx!==-1) sales[idx]=order; else sales.unshift(order);
     salEditId = null;
   } else { sales.unshift(order); }
-  saveSales();
+  sbUps('sales_orders', {...order, user_id:CU.id});
   rstSal();
   renderSalKPI(); renderSalList(); renderSalReports();
   const t = document.getElementById('salToast');
@@ -2834,7 +2835,8 @@ function editSal(id) {
 function delSal(id) {
   if(!confirm('حذف هذا الطلب نهائياً؟')) return;
   sales=sales.filter(s=>s.id!==id);
-  saveSales(); renderSalKPI(); renderSalList(); renderSalReports();
+  sbDel('sales_orders', id);
+  renderSalKPI(); renderSalList(); renderSalReports();
 }
 
 // ── KPI ──
@@ -3000,21 +3002,71 @@ function showSalImportPreview() {
   if(salImportBuf.length>50) body.innerHTML+=`<tr><td colspan="5" style="text-align:center;color:var(--mu);padding:8px">... و ${salImportBuf.length-50} طلب آخر</td></tr>`;
   prev.style.display='block';
 }
-function confirmSalImport() {
+async function confirmSalImport() {
   if(!salImportBuf.length) return;
   const existNums=new Set(sales.map(s=>s.num));
-  let added=0, skipped=0;
-  salImportBuf.forEach(o=>{
-    if(o.num&&existNums.has(o.num)){ skipped++; return; }
-    sales.unshift(o); added++;
-  });
-  saveSales();
+  const toAdd=salImportBuf.filter(o=>!(o.num&&existNums.has(o.num)));
+  const skipped=salImportBuf.length-toAdd.length;
+  const added=toAdd.length;
+  toAdd.forEach(o=>sales.unshift(o));
+  const rows=toAdd.map(o=>({...o,user_id:CU.id}));
+  for(let i=0;i<rows.length;i+=100) await sbUps('sales_orders',rows.slice(i,i+100));
   salImportBuf=[];
   document.getElementById('salImportPrev').style.display='none';
   document.getElementById('salImportMsg').textContent=`✅ تم استيراد ${added} طلب${skipped?` (تم تجاهل ${skipped} مكرر)`:''}`;
   document.getElementById('salImportMsg').style.color='var(--g)';
   renderSalKPI(); renderSalList(); renderSalReports();
   setTimeout(()=>switchSTab(3),1200);
+}
+
+// ── Load quotes from Supabase ──
+async function loadQuotes() {
+  try {
+    const data = await sbGet('price_quotes', `user_id=eq.${CU.id}&order=created_at.desc&limit=500`);
+    quotes = data.map(r => ({
+      id:r.id, num:r.num, date:r.date, customer:r.customer,
+      items:r.items||[], subtotal:r.subtotal||0, discount:r.discount||0,
+      discType:r.disc_type||'amount', discVal:r.disc_val||0, discLabel:r.disc_label||'',
+      taxable:r.taxable||0, vat:r.vat||0, grandTotal:r.grand_total||0,
+      notes:r.notes||[], created:r.created_at
+    }));
+  } catch(e) { console.warn('loadQuotes:', e); quotes = []; }
+}
+
+// ── Load sales from Supabase ──
+async function loadSalesOrders() {
+  try {
+    const data = await sbGet('sales_orders', `user_id=eq.${CU.id}&order=date.desc&limit=2000`);
+    sales = data.map(r => ({
+      id:r.id, num:r.num, date:r.date, cust:r.cust, city:r.city,
+      amt:parseFloat(r.amt)||0, tax:parseFloat(r.tax)||0, total:parseFloat(r.total)||0,
+      pay:r.pay, desc:r.desc, status:r.status||'مكتمل', src:r.src||'manual'
+    }));
+  } catch(e) { console.warn('loadSalesOrders:', e); sales = []; }
+}
+
+// ── One-time migration from localStorage ──
+async function migrateLocalStorage() {
+  const key = 'sb_migrated_' + CU.id;
+  if (localStorage.getItem(key)) return;
+  const lq = JSON.parse(localStorage.getItem('price_quotes') || '[]');
+  const ls = JSON.parse(localStorage.getItem('sales_orders') || '[]');
+  if (lq.length) {
+    const rows = lq.map(q => ({
+      id:q.id, user_id:CU.id, num:q.num, date:q.date, customer:q.customer,
+      items:q.items||[], subtotal:q.subtotal||0, discount:q.discount||0,
+      disc_type:q.discType||'amount', disc_val:q.discVal||0, disc_label:q.discLabel||'',
+      taxable:q.taxable||0, vat:q.vat||0, grand_total:q.grandTotal||0, notes:q.notes||[]
+    }));
+    for(let i=0;i<rows.length;i+=100) await sbUps('price_quotes', rows.slice(i,i+100));
+    await loadQuotes();
+  }
+  if (ls.length) {
+    const rows = ls.map(o => ({...o, user_id:CU.id}));
+    for(let i=0;i<rows.length;i+=100) await sbUps('sales_orders', rows.slice(i,i+100));
+    await loadSalesOrders();
+  }
+  localStorage.setItem(key, '1');
 }
 
 // ── Service Worker (PWA) — مع تحديث تلقائي ──
