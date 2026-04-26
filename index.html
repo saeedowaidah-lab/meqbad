@@ -3163,17 +3163,17 @@ function showSalImportPreview() {
     تم قراءة <strong>${salImportBuf.length}</strong> طلب &nbsp;|&nbsp;
     غير الملغي: <strong>${active.length}</strong> طلب &nbsp;|&nbsp;
     ملغي: <strong style="color:var(--r)">${cancelled.length}</strong>
-    <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
-      <div style="padding:8px 14px;background:#f0fdf4;border-radius:8px;border:1.5px solid #bbf7d0">
-        <div style="font-size:11px;color:var(--mu)">الإجمالي (طريقة الضريبة)</div>
-        <div style="font-size:16px;font-weight:900;color:var(--g)">${fmt(tot1)} ر.س</div>
-      </div>
-      <div style="padding:8px 14px;background:#eff6ff;border-radius:8px;border:1.5px solid #bfdbfe">
-        <div style="font-size:11px;color:var(--mu)">الإجمالي (مجموع السلة+شحن+ضريبة)</div>
-        <div style="font-size:16px;font-weight:900;color:#2563eb">${fmt(active.reduce((s,o)=>s+(o._cart||0)+(o._ship||0)+(o._tax||0),0))} ر.س</div>
-      </div>
+    <div style="margin-top:8px">
+      ${Object.entries(
+        active.reduce((acc,o)=>{const y=(o.date||'').slice(0,4)||'غير محدد';if(!acc[y])acc[y]={cnt:0,tot:0};acc[y].cnt++;acc[y].tot+=o.total;return acc;},{})
+      ).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,g])=>`
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;background:#f0fdf4;border-radius:8px;border:1.5px solid #bbf7d0;margin-left:8px;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:800;color:var(--c2)">${y}</span>
+          <span style="font-size:13px;font-weight:900;color:var(--g)">${fmt(g.tot)} ر.س</span>
+          <span style="font-size:11px;color:var(--mu)">(${g.cnt} طلب)</span>
+        </div>`).join('')}
     </div>
-    <div style="font-size:11px;color:var(--mu);margin-top:6px">الرقم الصحيح من سلة: <strong>292,135.05 ر.س</strong> — أيهما أقرب؟</div>`;
+    <div style="font-size:11px;color:var(--mu);margin-top:6px">قارن مع سلة حسب السنة</div>`;
   body.innerHTML=salImportBuf.slice(0,50).map(o=>`
     <tr>
       <td style="font-weight:800">${o.num||'—'}</td>
