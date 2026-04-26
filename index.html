@@ -910,6 +910,10 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
               3. اختر <strong>Excel (.xlsx)</strong> وحدد الفترة الزمنية<br>
               4. ارفع الملف هنا ↓
             </div>
+            <div style="margin-bottom:12px;padding:10px 14px;background:#fff8e1;border-radius:10px;border:1.5px solid #fde68a;display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div style="font-size:12px;color:#92400e;font-weight:700">⚠️ إذا سبق واستوردت بيانات خاطئة، احذفها أولاً ثم أعد الاستيراد</div>
+              <button class="btn brd sm" style="white-space:nowrap;color:var(--r);border-color:var(--r)" onclick="deleteSallaImport()">🗑 حذف بيانات سلة</button>
+            </div>
             <div id="salImportZone" onclick="document.getElementById('salFileInp').click()"
               style="border:2px dashed var(--bd);border-radius:12px;padding:40px;text-align:center;cursor:pointer;background:var(--bd2);transition:.2s"
               ondragover="event.preventDefault();this.style.borderColor='var(--c3)'"
@@ -3144,6 +3148,28 @@ function showSalImportPreview() {
   if(salImportBuf.length>50) body.innerHTML+=`<tr><td colspan="5" style="text-align:center;color:var(--mu);padding:8px">... و ${salImportBuf.length-50} طلب آخر</td></tr>`;
   prev.style.display='block';
 }
+async function deleteSallaImport() {
+  const cnt = sales.filter(s=>s.src==='salla').length;
+  if (!cnt) { alert('لا توجد بيانات سلة مستوردة'); return; }
+  if (!confirm(`سيتم حذف ${cnt} طلب مستورد من سلة. متابعة؟`)) return;
+  const toDelete = sales.filter(s=>s.src==='salla');
+  const msg = document.getElementById('salImportMsg');
+  msg.textContent='⏳ جارٍ الحذف...'; msg.style.color='var(--c2)';
+  try {
+    for (const o of toDelete) {
+      await fetch(`${SURL}/rest/v1/sales_orders?id=eq.${o.id}&user_id=eq.${activeUserId}`, {
+        method:'DELETE', headers: sbH()
+      });
+    }
+    sales = sales.filter(s=>s.src!=='salla');
+    renderSalKPI(); renderSalList(); renderSalReports();
+    msg.textContent=`✅ تم حذف ${cnt} طلب — الآن أعد رفع الملف`;
+    msg.style.color='var(--g)';
+  } catch(e) {
+    msg.textContent='❌ خطأ: '+e.message; msg.style.color='var(--r)';
+  }
+}
+
 async function confirmSalImport() {
   if(!salImportBuf.length) return;
   const existNums=new Set(sales.map(s=>s.num));
