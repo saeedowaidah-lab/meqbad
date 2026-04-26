@@ -3060,23 +3060,26 @@ function parseSallaFile(file) {
       };
 
       salImportBuf=rows.map((row,i)=>{
-        const total=anyNum(row,['الإجمالي الكلي','الإجمالي مع الضريبة','المبلغ الكلي','الإجمالي','total','Total','grand_total','المجموع الكلي','المجموع']);
-        const tax  =anyNum(row,['ضريبة القيمة المضافة','ضريبة','tax','VAT','vat','قيمة الضريبة']);
-        const amt  =anyNum(row,['الإجمالي قبل الضريبة','المجموع قبل الضريبة','subtotal','sub'])||
-                    (total>0&&tax>0 ? total-tax : total/1.15)||0;
+        const cart    = anyNum(row,['مجموع السلة']);
+        const ship    = anyNum(row,['تكلفة الشحن','الشحن']);
+        const tax     = anyNum(row,['الضريبة','ضريبة القيمة المضافة','ضريبة','VAT','vat','tax']);
+        const rawTotal= anyNum(row,['إجمالي الطلب (غير شامل التخفيضات)','إجمالي الطلب','الإجمالي','total','Total']);
+        // الإجمالي الفعلي = سلة + شحن + ضريبة
+        const total   = rawTotal || parseFloat((cart+ship+tax).toFixed(2)) || 0;
+        const amt     = tax>0 ? parseFloat((total-tax).toFixed(2)) : parseFloat((total/1.15).toFixed(2));
         return {
-          id: Date.now().toString()+i,
-          num:  mapCol(row,['رقم الطلب','رقم','order_id','Order ID','Order Number','#','id','ID']),
-          date: parseExcelDate(mapCol(row,['تاريخ الطلب','تاريخ الإنشاء','تاريخ','date','Date','created_at','created'])),
-          cust: mapCol(row,['اسم العميل','اسم الزبون','العميل','الاسم','customer','Customer','client','name']),
-          city: mapCol(row,['المدينة','المنطقة','city','City','region']),
+          id:   Date.now().toString()+i,
+          num:  mapCol(row,['رقم الطلب','order_id','Order ID','#','id']),
+          date: parseExcelDate(mapCol(row,['تاريخ الطلب','تاريخ الإنشاء','تاريخ','created_at','date','Date'])),
+          cust: mapCol(row,['اسم العميل','اسم الزبون','العميل','customer','name']),
+          city: mapCol(row,['المدينة','المنطقة','city','City']),
           amt:  parseFloat(amt.toFixed(2))||0,
           tax:  parseFloat(tax.toFixed(2))||0,
           total:parseFloat(total.toFixed(2))||0,
-          pay:  mapCol(row,['طريقة الدفع','الدفع','payment','Payment','payment_method'])||'سلة',
-          desc: mapCol(row,['المنتجات','المنتج','الطلبات','product','items','products','وصف'])||'',
-          status: mapSallaStatus(mapCol(row,['الحالة','حالة الطلب','status','Status'])),
-          src: 'salla'
+          pay:  mapCol(row,['طريقة الدفع','الدفع','payment','Payment'])||'سلة',
+          desc: mapCol(row,['المنتجات','المنتج','وصف','product','items'])||'',
+          status: mapSallaStatus(mapCol(row,['حالة الطلب','الحالة','status','Status'])),
+          src:  'salla'
         };
       });
 
