@@ -984,6 +984,21 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
           <div id="pwRMsg" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;color:#166534;margin-top:8px"></div>
           <div class="srow"><div class="srl"><div class="sl">تسجيل الخروج</div></div><button class="btn brd sm" onclick="doOut()">خروج من الحساب</button></div>
         </div></div>
+        <div class="card" id="teamCard"><div class="ch"><h3>👥 إدارة الفريق</h3></div><div class="cb">
+          <div id="teamMemberBadge" style="display:none;margin-bottom:12px;padding:10px 14px;background:#eff6ff;border-radius:10px;border:1.5px solid #bfdbfe">
+            <div style="font-size:13px;color:#1d4ed8;font-weight:700">👤 أنت موظف في هذا المتجر</div>
+            <div style="font-size:11px;color:#3b82f6;margin-top:4px">يمكنك عرض وإضافة البيانات لكن لا تستطيع إدارة الفريق</div>
+          </div>
+          <div id="teamOwnerSection">
+            <div class="sd" style="margin-bottom:14px">أضف موظفين لمتجرك — كل موظف يسجل بحسابه الخاص ويرى بيانات المتجر كاملة</div>
+            <div id="teamList"></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <input class="si" id="teamEmailInp" placeholder="بريد الموظف الإلكتروني" type="email" style="flex:1">
+              <button class="btn bp sm" onclick="addTeamMember()">➕ إضافة</button>
+            </div>
+            <div id="teamErr" style="display:none;font-size:12px;color:var(--r);font-weight:700;margin-top:8px;padding:7px 12px;background:#fff1f2;border-radius:8px;border:1px solid #fecaca"></div>
+          </div>
+        </div></div>
         <div class="card"><div class="ch"><h3>🤖 الذكاء الاصطناعي</h3></div><div class="cb">
           <div class="srow"><div class="srl"><div class="sl">مفتاح OpenRouter</div><div class="sd">يُحفظ في Supabase ويعمل تلقائياً لجميع الموظفين</div></div>
             <div style="display:flex;flex-direction:column;gap:6px;min-width:240px">
@@ -1090,7 +1105,7 @@ async function sbPost(table, body) {
   if (!r.ok) throw new Error(await r.text());
 }
 async function sbDel(table, id) {
-  const r = await fetch(`${SURL}/rest/v1/${table}?id=eq.${id}&user_id=eq.${CU.id}`, {
+  const r = await fetch(`${SURL}/rest/v1/${table}?id=eq.${id}&user_id=eq.${activeUserId}`, {
     method:'DELETE', headers: sbH()
   });
   if (!r.ok) throw new Error(await r.text());
@@ -1162,6 +1177,8 @@ const QQ = [
 // STATE
 // ══════════════════════════════════════════════
 let CU = null; // current user
+let activeUserId = null; // store owner's ID (=CU.id if owner, else owner's ID if member)
+let isTeamMember = false; // true if logged-in user is a team member, not the store owner
 let invs = [], sdata = {};
 let selM = new Date().getMonth(), selQ = 0;
 let privacyOn = localStorage.getItem('dash_privacy') === '1';
@@ -1220,9 +1237,73 @@ async function doUp() {
   btn.disabled = false; btn.textContent = 'إنشاء الحساب →';
 }
 
+async function checkMembership() {
+  try {
+    const data = await sbGet('store_members', `member_email=eq.${encodeURIComponent(CU.email)}&limit=1`);
+    if (data.length > 0) {
+      activeUserId = data[0].owner_id;
+      isTeamMember = true;
+      // ربط member_id إذا لم يكن مرتبطاً بعد
+      if (!data[0].member_id) {
+        await fetch(`${SURL}/rest/v1/store_members?id=eq.${data[0].id}`, {
+          method: 'PATCH', headers: sbH(), body: JSON.stringify({member_id: CU.id})
+        });
+      }
+    } else {
+      activeUserId = CU.id;
+      isTeamMember = false;
+    }
+  } catch(e) {
+    activeUserId = CU.id;
+    isTeamMember = false;
+  }
+}
+
+async function loadTeamMembers() {
+  const list = document.getElementById('teamList'); if (!list) return;
+  try {
+    const data = await sbGet('store_members', `owner_id=eq.${CU.id}&order=created_at.asc`);
+    if (!data.length) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--mu);text-align:center;padding:12px">لا يوجد أعضاء بعد</div>';
+    } else {
+      list.innerHTML = data.map(m => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--bd2);border-radius:9px;margin-bottom:6px;border:1px solid var(--bd)">
+          <div>
+            <div style="font-size:13px;font-weight:700">${m.member_email}</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:2px">${m.member_id ? '✅ سجّل دخوله' : '⏳ لم يسجل بعد'}</div>
+          </div>
+          <button class="btn brd sm" onclick="removeTeamMember('${m.id}')">🗑</button>
+        </div>`).join('');
+    }
+  } catch(e) { console.warn('loadTeamMembers:', e); }
+}
+
+async function addTeamMember() {
+  const inp = document.getElementById('teamEmailInp');
+  const err = document.getElementById('teamErr');
+  const email = inp.value.trim().toLowerCase();
+  err.style.display = 'none';
+  if (!email || !email.includes('@')) { err.textContent='❌ أدخل بريد إلكتروني صحيح'; err.style.display='block'; return; }
+  try {
+    await sbUps('store_members', {owner_id: CU.id, member_email: email});
+    inp.value = '';
+    loadTeamMembers();
+  } catch(e) { err.textContent='❌ '+e.message; err.style.display='block'; }
+}
+
+async function removeTeamMember(id) {
+  if (!confirm('حذف هذا العضو من الفريق؟')) return;
+  try {
+    await fetch(`${SURL}/rest/v1/store_members?id=eq.${id}&owner_id=eq.${CU.id}`, {
+      method:'DELETE', headers: sbH()
+    });
+    loadTeamMembers();
+  } catch(e) { alert('❌ '+e.message); }
+}
+
 async function doOut() {
   await SB.auth.signOut();
-  CU=null; sessionToken=null; invs=[]; sdata={}; quotes=[]; sales=[];
+  CU=null; sessionToken=null; activeUserId=null; isTeamMember=false; invs=[]; sdata={}; quotes=[]; sales=[];
   document.getElementById('app').style.display='none';
   document.getElementById('authWrap').style.display='flex';
   document.getElementById('aLoad').style.display='none';
@@ -1242,6 +1323,7 @@ SB.auth.onAuthStateChange(async (event, session) => {
   if (session?.user) {
     CU = session.user;
     sessionToken = session.access_token;
+    await checkMembership();
     document.getElementById('authWrap').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     const em = CU.email || '';
@@ -1289,7 +1371,7 @@ function syncShow(msg, type) {
 async function loadInvs() {
   try {
     syncShow('جارٍ تحميل الفواتير...', 'load');
-    const data = await sbGet('invoices', `user_id=eq.${CU.id}&order=date.desc&limit=1000`);
+    const data = await sbGet('invoices', `user_id=eq.${activeUserId}&order=date.desc&limit=1000`);
     invs = data.map(r => ({
       id:r.id, num:r.num||'', date:r.date,
       supplier:r.supplier||'', cat:r.cat||'أخرى', desc:r.description||'',
@@ -1307,7 +1389,7 @@ async function loadInvs() {
 
 async function importPreload() {
   const rows = PRELOAD.map(r => ({
-    id: r.id, user_id: CU.id,
+    id: r.id, user_id: activeUserId,
     num: r.num||null, date: r.date,
     supplier: r.supplier||null, cat: r.cat,
     description: r.desc||null,
@@ -1322,7 +1404,7 @@ async function importPreload() {
 
 async function loadSales() {
   try {
-    const data = await sbGet('sales_data', `user_id=eq.${CU.id}`);
+    const data = await sbGet('sales_data', `user_id=eq.${activeUserId}`);
     sdata = {};
     if (data && data.length > 0) {
       data.forEach(r => { sdata[r.year+'_'+r.month] = r.amount; });
@@ -1332,7 +1414,7 @@ async function loadSales() {
 
 async function loadSettings() {
   try {
-    const data = await sbGet('store_settings', `user_id=eq.${CU.id}`);
+    const data = await sbGet('store_settings', `user_id=eq.${activeUserId}`);
     if (data && data.length > 0) {
       const d = data[0];
       const nm = d.store_name||'متجر مقبض';
@@ -1376,7 +1458,7 @@ async function savB() {
   const btn = document.getElementById('savBtn');
   btn.disabled=true; btn.textContent='⏳ جارٍ الحفظ...';
   const id = Date.now();
-  const row = {id, user_id:CU.id,
+  const row = {id, user_id:activeUserId,
     num:num||null, date:dt,
     supplier:document.getElementById('bs').value.trim()||null,
     cat:document.getElementById('bc').value,
@@ -1441,7 +1523,7 @@ function editI(id) {
 
 async function savSd(y, m, v) {
   sdata[y+'_'+m] = v;
-  try { await sbUps('sales_data', {user_id:CU.id,year:y,month:m,amount:parseFloat(v)||0}); }
+  try { await sbUps('sales_data', {user_id:activeUserId,year:y,month:m,amount:parseFloat(v)||0}); }
   catch(e) { console.warn('savSd:', e); }
 }
 
@@ -1455,7 +1537,7 @@ async function savSet() {
     if (ks) { ks.textContent = '✅ مفعّل'; ks.style.color='var(--g)'; }
   }
   try {
-    await sbUps('store_settings', {user_id:CU.id, store_name:name,
+    await sbUps('store_settings', {user_id:activeUserId, store_name:name,
       vat_number:document.getElementById('sVN').value,
       manager_name:document.getElementById('sMgr').value});
     const sbn=document.getElementById('sbNm'); if(sbn) sbn.textContent=name;
@@ -2026,6 +2108,17 @@ function rSet() {
     <div class="strow"><span class="stl">المستخدم</span><span class="stv" style="font-size:11px">${CU?.email||'-'}</span></div>
     <div class="strow"><span class="stl">الموظف الحالي</span><span class="stv" style="color:var(--c2)">${employeeName||'غير محدد'} <button onclick="changeEmployee()" style="font-size:10px;margin-right:8px;background:var(--bd2);border:1px solid var(--bd);border-radius:5px;padding:2px 8px;cursor:pointer;font-family:inherit">تغيير</button></span></div>
     <div class="strow"><span class="stl">عنوان IP</span><span class="stv" style="font-family:monospace;font-size:12px">${userIP}</span></div>`;
+  // ── Team section ──
+  const tmb = document.getElementById('teamMemberBadge');
+  const tos = document.getElementById('teamOwnerSection');
+  if (isTeamMember) {
+    if (tmb) tmb.style.display = 'block';
+    if (tos) tos.style.display = 'none';
+  } else {
+    if (tmb) tmb.style.display = 'none';
+    if (tos) tos.style.display = 'block';
+    loadTeamMembers();
+  }
   loadAuditLog();
 }
 
@@ -2131,7 +2224,7 @@ async function loadAuditLog() {
   // ── محاولة قراءة من Supabase (إذا كان الجدول موجوداً) ──
   let sbLogs = [];
   try {
-    const data = await sbGet('audit_log', `user_id=eq.${CU.id}&order=created_at.desc&limit=100`);
+    const data = await sbGet('audit_log', `user_id=eq.${activeUserId}&order=created_at.desc&limit=100`);
     if (Array.isArray(data)) sbLogs = data;
   } catch(e) {}
 
@@ -2195,7 +2288,7 @@ async function applyCorrections() {
   try {
     for (const c of CORRECTIONS) {
       const row = {
-        id: c.id, user_id: CU.id,
+        id: c.id, user_id: activeUserId,
         num: c.num, date: c.date,
         supplier: c.supplier, cat: c.cat,
         description: c.desc,
@@ -2403,7 +2496,7 @@ function savQ() {
     quotes.unshift(q);
   }
   sbUps('price_quotes', {
-    id:q.id, user_id:CU.id, num:q.num, date:q.date, customer:q.customer,
+    id:q.id, user_id:activeUserId, num:q.num, date:q.date, customer:q.customer,
     items:q.items, subtotal:q.subtotal, discount:q.discount,
     disc_type:q.discType, disc_val:q.discVal, disc_label:q.discLabel||'',
     taxable:q.taxable, vat:q.vat, grand_total:q.grandTotal, notes:q.notes||[]
@@ -2800,7 +2893,7 @@ function savSal() {
     if (idx!==-1) sales[idx]=order; else sales.unshift(order);
     salEditId = null;
   } else { sales.unshift(order); }
-  sbUps('sales_orders', {...order, user_id:CU.id});
+  sbUps('sales_orders', {...order, user_id:activeUserId});
   rstSal();
   renderSalKPI(); renderSalList(); renderSalReports();
   const t = document.getElementById('salToast');
@@ -3009,7 +3102,7 @@ async function confirmSalImport() {
   const skipped=salImportBuf.length-toAdd.length;
   const added=toAdd.length;
   toAdd.forEach(o=>sales.unshift(o));
-  const rows=toAdd.map(o=>({...o,user_id:CU.id}));
+  const rows=toAdd.map(o=>({...o,user_id:activeUserId}));
   for(let i=0;i<rows.length;i+=100) await sbUps('sales_orders',rows.slice(i,i+100));
   salImportBuf=[];
   document.getElementById('salImportPrev').style.display='none';
@@ -3022,7 +3115,7 @@ async function confirmSalImport() {
 // ── Load quotes from Supabase ──
 async function loadQuotes() {
   try {
-    const data = await sbGet('price_quotes', `user_id=eq.${CU.id}&order=created_at.desc&limit=500`);
+    const data = await sbGet('price_quotes', `user_id=eq.${activeUserId}&order=created_at.desc&limit=500`);
     quotes = data.map(r => ({
       id:r.id, num:r.num, date:r.date, customer:r.customer,
       items:r.items||[], subtotal:r.subtotal||0, discount:r.discount||0,
@@ -3036,7 +3129,7 @@ async function loadQuotes() {
 // ── Load sales from Supabase ──
 async function loadSalesOrders() {
   try {
-    const data = await sbGet('sales_orders', `user_id=eq.${CU.id}&order=date.desc&limit=2000`);
+    const data = await sbGet('sales_orders', `user_id=eq.${activeUserId}&order=date.desc&limit=2000`);
     sales = data.map(r => ({
       id:r.id, num:r.num, date:r.date, cust:r.cust, city:r.city,
       amt:parseFloat(r.amt)||0, tax:parseFloat(r.tax)||0, total:parseFloat(r.total)||0,
@@ -3047,13 +3140,14 @@ async function loadSalesOrders() {
 
 // ── One-time migration from localStorage ──
 async function migrateLocalStorage() {
+  if (isTeamMember) return; // أعضاء الفريق لا يهاجرون
   const key = 'sb_migrated_' + CU.id;
   if (localStorage.getItem(key)) return;
   const lq = JSON.parse(localStorage.getItem('price_quotes') || '[]');
   const ls = JSON.parse(localStorage.getItem('sales_orders') || '[]');
   if (lq.length) {
     const rows = lq.map(q => ({
-      id:q.id, user_id:CU.id, num:q.num, date:q.date, customer:q.customer,
+      id:q.id, user_id:activeUserId, num:q.num, date:q.date, customer:q.customer,
       items:q.items||[], subtotal:q.subtotal||0, discount:q.discount||0,
       disc_type:q.discType||'amount', disc_val:q.discVal||0, disc_label:q.discLabel||'',
       taxable:q.taxable||0, vat:q.vat||0, grand_total:q.grandTotal||0, notes:q.notes||[]
@@ -3062,7 +3156,7 @@ async function migrateLocalStorage() {
     await loadQuotes();
   }
   if (ls.length) {
-    const rows = ls.map(o => ({...o, user_id:CU.id}));
+    const rows = ls.map(o => ({...o, user_id:activeUserId}));
     for(let i=0;i<rows.length;i+=100) await sbUps('sales_orders', rows.slice(i,i+100));
     await loadSalesOrders();
   }
