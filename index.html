@@ -3152,15 +3152,12 @@ async function deleteSallaImport() {
   const cnt = sales.filter(s=>s.src==='salla').length;
   if (!cnt) { alert('لا توجد بيانات سلة مستوردة'); return; }
   if (!confirm(`سيتم حذف ${cnt} طلب مستورد من سلة. متابعة؟`)) return;
-  const toDelete = sales.filter(s=>s.src==='salla');
   const msg = document.getElementById('salImportMsg');
   msg.textContent='⏳ جارٍ الحذف...'; msg.style.color='var(--c2)';
   try {
-    for (const o of toDelete) {
-      await fetch(`${SURL}/rest/v1/sales_orders?id=eq.${o.id}&user_id=eq.${activeUserId}`, {
-        method:'DELETE', headers: sbH()
-      });
-    }
+    await fetch(`${SURL}/rest/v1/sales_orders?src=eq.salla&user_id=eq.${activeUserId}`, {
+      method:'DELETE', headers: sbH()
+    });
     sales = sales.filter(s=>s.src!=='salla');
     renderSalKPI(); renderSalList(); renderSalReports();
     msg.textContent=`✅ تم حذف ${cnt} طلب — الآن أعد رفع الملف`;
