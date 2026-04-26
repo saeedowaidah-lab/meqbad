@@ -3076,13 +3076,16 @@ function parseSallaFile(file) {
       // fallback: قراءة بالترتيب (اسم العميل=0، جوال=1، مدينة=2، رقم الطلب=3، حالة=4، مجموع السلة=5، شحن=6، دفع=7، ضريبة=8، إجمالي=9، تاريخ=10)
       const byIdx=(row,i)=>{const v=Object.values(row)[i];return v!=null?String(v).replace(/[^\d.]/g,''):'';};
       salImportBuf=rows.map((row,i)=>{
+        const cart = anyNum(row,['مجموع السلة']) || parseFloat(byIdx(row,5))||0;
         const ship = anyNum(row,['تكلفة الشحن','الشحن']) || parseFloat(byIdx(row,6))||0;
         const tax  = anyNum(row,['الضريبة','ضريبة القيمة المضافة','VAT','vat','tax']) || parseFloat(byIdx(row,8))||0;
-        // الضريبة = 15% من المبلغ بعد الخصم — نحسب الإجمالي الفعلي منها
-        const amt  = tax>0 ? parseFloat((tax/0.15).toFixed(2)) : 0;
+        const rawTotal = anyNum(row,['إجمالي الطلب','إجمالي','total','Total']) || parseFloat(byIdx(row,9))||0;
+        // نحسب بطريقة الضريبة (بعد الخصم)
+        const amt  = tax>0 ? parseFloat((tax/0.15).toFixed(2)) : cart;
         const total= parseFloat((amt+ship+tax).toFixed(2));
         return {
           id:   Date.now().toString()+i,
+          _cart:cart, _ship:ship, _tax:tax, _raw:rawTotal,
           num:  mapCol(row,['رقم الطلب','order_id','Order ID','#','id']),
           date: parseExcelDate(mapCol(row,['تاريخ الطلب','تاريخ الإنشاء','تاريخ','created_at','date','Date'])),
           cust: mapCol(row,['اسم العميل','اسم الزبون','العميل','customer','name']),
@@ -3152,13 +3155,25 @@ function showSalImportPreview() {
   const cnt =document.getElementById('salImportCount');
   const active=salImportBuf.filter(o=>o.status!=='ملغي'&&o.status!=='مسترجع');
   const cancelled=salImportBuf.filter(o=>o.status==='ملغي'||o.status==='مسترجع');
-  const totAll=salImportBuf.reduce((s,o)=>s+o.total,0);
-  const totActive=active.reduce((s,o)=>s+o.total,0);
+  // طريقة 1: الضريبة ÷ 15% (الحالية)
+  const tot1=active.reduce((s,o)=>s+o.total,0);
+  // طريقة 2: مجموع السلة + شحن + ضريبة (من الخام)
+  const tot2=salImportBuf._raw ? active.reduce((s,o)=>s+(o._cart+o._ship+o._tax),0) : 0;
   if(cnt) cnt.innerHTML=`
     تم قراءة <strong>${salImportBuf.length}</strong> طلب &nbsp;|&nbsp;
-    غير الملغي: <strong style="color:var(--g)">${active.length} طلب — ${fmt(totActive)} ر.س</strong> &nbsp;|&nbsp;
-    ملغي: <strong style="color:var(--r)">${cancelled.length} طلب</strong>
-    <div style="font-size:11px;color:var(--mu);margin-top:4px">قارن الإجمالي مع سلة قبل الاستيراد</div>`;
+    غير الملغي: <strong>${active.length}</strong> طلب &nbsp;|&nbsp;
+    ملغي: <strong style="color:var(--r)">${cancelled.length}</strong>
+    <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+      <div style="padding:8px 14px;background:#f0fdf4;border-radius:8px;border:1.5px solid #bbf7d0">
+        <div style="font-size:11px;color:var(--mu)">الإجمالي (طريقة الضريبة)</div>
+        <div style="font-size:16px;font-weight:900;color:var(--g)">${fmt(tot1)} ر.س</div>
+      </div>
+      <div style="padding:8px 14px;background:#eff6ff;border-radius:8px;border:1.5px solid #bfdbfe">
+        <div style="font-size:11px;color:var(--mu)">الإجمالي (مجموع السلة+شحن+ضريبة)</div>
+        <div style="font-size:16px;font-weight:900;color:#2563eb">${fmt(active.reduce((s,o)=>s+(o._cart||0)+(o._ship||0)+(o._tax||0),0))} ر.س</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--mu);margin-top:6px">الرقم الصحيح من سلة: <strong>292,135.05 ر.س</strong> — أيهما أقرب؟</div>`;
   body.innerHTML=salImportBuf.slice(0,50).map(o=>`
     <tr>
       <td style="font-weight:800">${o.num||'—'}</td>
