@@ -3127,8 +3127,15 @@ function parseExcelDate(v) {
   return v.slice(0,10)||'';
 }
 function mapSallaStatus(s) {
-  const m={'completed':'مكتمل','complete':'مكتمل','مكتمل':'مكتمل','delivered':'مكتمل','pending':'معلق','معلق':'معلق','processing':'معلق','canceled':'ملغي','cancelled':'ملغي','ملغي':'ملغي','refunded':'مسترجع','مسترجع':'مسترجع'};
-  return m[(s||'').toLowerCase()]||'مكتمل';
+  const v=(s||'').trim().toLowerCase();
+  // مكتمل — تم التسليم فعلاً
+  if(['completed','complete','delivered','تم التوصيل','تم الاستلام','مكتمل','تم التسليم'].some(k=>v===k.toLowerCase())) return 'مكتمل';
+  // ملغي
+  if(['canceled','cancelled','ملغي','ملغى','مرفوض','rejected'].some(k=>v===k.toLowerCase())) return 'ملغي';
+  // مسترجع
+  if(['refunded','مسترجع','استرجاع','returned'].some(k=>v===k.toLowerCase())) return 'مسترجع';
+  // كل شيء آخر = معلق (قيد المعالجة، تم الشحن، جاهز للاستلام، إلخ)
+  return 'معلق';
 }
 function showSalImportPreview() {
   const prev=document.getElementById('salImportPrev');
