@@ -2935,17 +2935,22 @@ function delSal(id) {
 // ── KPI ──
 function renderSalKPI() {
   const y = getY();
-  const yi = sales.filter(s=>s.date&&s.date.startsWith(y)&&s.status!=='ملغي'&&s.status!=='مسترجع');
-  const tot   = yi.reduce((s,o)=>s+(o.total||0),0);
-  const tax   = yi.reduce((s,o)=>s+(o.tax||0),0);
-  const cnt   = yi.length;
-  const avg   = cnt ? tot/cnt : 0;
+  const all_y   = sales.filter(s=>s.date&&s.date.startsWith(y));
+  const done    = all_y.filter(s=>s.status==='مكتمل');
+  const pending = all_y.filter(s=>s.status==='معلق');
+  const cancelled = all_y.filter(s=>s.status==='ملغي'||s.status==='مسترجع');
+  const tot = done.reduce((s,o)=>s+(o.total||0),0);
+  const tax = done.reduce((s,o)=>s+(o.tax||0),0);
+  const cnt = done.length;
+  const avg = cnt ? tot/cnt : 0;
   const el = document.getElementById('salMcs'); if(!el) return;
   el.innerHTML = `
-    <div class="mc gr"><div class="mcs"></div><span class="mci">💰</span><div class="mcl">إجمالي المبيعات ${y}</div><div class="mcv">${fmt(tot)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">شامل الضريبة</div></div>
-    <div class="mc bl"><div class="mcs"></div><span class="mci">🛍</span><div class="mcl">عدد الطلبات</div><div class="mcv">${cnt}</div><div class="mcsub">لعام ${y}</div></div>
-    <div class="mc am"><div class="mcs"></div><span class="mci">📊</span><div class="mcl">متوسط قيمة الطلب</div><div class="mcv">${fmt(avg)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">لعام ${y}</div></div>
-    <div class="mc rd"><div class="mcs"></div><span class="mci">🧾</span><div class="mcl">إجمالي الضريبة</div><div class="mcv">${fmt(tax)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">ضريبة المخرجات</div></div>`;
+    <div class="mc gr"><div class="mcs"></div><span class="mci">💰</span><div class="mcl">إجمالي المبيعات ${y}</div><div class="mcv">${fmtP(tot)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">الطلبات المكتملة فقط</div></div>
+    <div class="mc bl"><div class="mcs"></div><span class="mci">✅</span><div class="mcl">طلبات مكتملة</div><div class="mcv">${cnt}</div><div class="mcsub">لعام ${y}</div></div>
+    <div class="mc am"><div class="mcs"></div><span class="mci">📊</span><div class="mcl">متوسط قيمة الطلب</div><div class="mcv">${fmtP(avg)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">المكتملة فقط</div></div>
+    <div class="mc rd"><div class="mcs"></div><span class="mci">🧾</span><div class="mcl">ضريبة المخرجات</div><div class="mcv">${fmtP(tax)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">المكتملة فقط</div></div>
+    ${pending.length?`<div class="mc" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fde68a"><div class="mcs"></div><span class="mci">⏳</span><div class="mcl">طلبات معلقة</div><div class="mcv" style="color:#d97706">${pending.length}</div><div class="mcsub">لم تُحتسب في الإجمالي</div></div>`:''}
+    ${cancelled.length?`<div class="mc" style="background:linear-gradient(135deg,#fff1f2,#fee2e2);border:1.5px solid #fecaca"><div class="mcs"></div><span class="mci">❌</span><div class="mcl">ملغي / مسترجع</div><div class="mcv" style="color:#dc2626">${cancelled.length}</div><div class="mcsub">مؤرشف — غير محتسب</div></div>`:''}`;
 }
 
 // ── List ──
@@ -2982,7 +2987,7 @@ function renderSalReports() {
   const el=document.getElementById('salRepBody'); if(!el) return;
   if(!sales.length){el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--mu)">لا توجد طلبات</div>';return;}
   const groups={};
-  sales.filter(o=>o.status!=='ملغي'&&o.status!=='مسترجع').forEach(o=>{
+  sales.filter(o=>o.status==='مكتمل').forEach(o=>{
     const key=(o.date||'').slice(0,7);
     if(!groups[key]) groups[key]={list:[],tot:0,tax:0};
     groups[key].list.push(o); groups[key].tot+=o.total||0; groups[key].tax+=o.tax||0;
