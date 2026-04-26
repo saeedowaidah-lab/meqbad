@@ -3024,42 +3024,80 @@ function parseSallaFile(file) {
     try {
       const wb=XLSX.read(e.target.result,{type:'array'});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
       if(!rows.length){msg.textContent='الملف فارغ أو غير مدعوم';msg.style.color='var(--r)';return;}
-      // Map Salla columns (flexible matching)
+
+      // طباعة أسماء الأعمدة للتشخيص
+      const cols=Object.keys(rows[0]);
+      console.log('Salla columns:', cols);
+
+      // مطابقة مرنة — تبحث في اسم العمود بدون حساسية للأحرف
       const mapCol=(row,keys)=>{
+        const rkeys=Object.keys(row);
         for(const k of keys){
-          for(const rk of Object.keys(row)){
-            if(rk.includes(k)||k.includes(rk)) return String(row[rk]||'').trim();
-          }
+          // مطابقة تامة أولاً
+          const exact=rkeys.find(rk=>rk.trim()===k.trim());
+          if(exact) return String(row[exact]||'').trim();
+        }
+        for(const k of keys){
+          // مطابقة جزئية
+          const partial=rkeys.find(rk=>rk.includes(k)||k.includes(rk));
+          if(partial) return String(row[partial]||'').trim();
         }
         return '';
       };
-      salImportBuf=rows.map((row,i)=>({
-        id: Date.now().toString()+i,
-        num:  mapCol(row,['رقم الطلب','order_id','Order ID','order','#']),
-        date: parseExcelDate(mapCol(row,['تاريخ','date','Date','created'])),
-        cust: mapCol(row,['اسم العميل','customer','Customer','client','الاسم']),
-        city: mapCol(row,['المدينة','city','City','مدينة']),
-        amt:  parseFloat(mapCol(row,['الإجمالي قبل','subtotal','sub','المجموع قبل']))||
-              parseFloat(mapCol(row,['total','الإجمالي','المجموع']))/1.15||0,
-        tax:  parseFloat(mapCol(row,['ضريبة','tax','VAT','vat']))||0,
-        total:parseFloat(mapCol(row,['الإجمالي','total','Total','المبلغ']))||0,
-        pay:  mapCol(row,['الدفع','payment','Payment','طريقة'])||'سلة',
-        desc: mapCol(row,['المنتج','product','items','بضاعة','وصف'])||'',
-        status: mapSallaStatus(mapCol(row,['الحالة','status','Status'])),
-        src: 'salla'
-      })).filter(o=>o.total>0||o.amt>0);
-      // fix totals if missing
+
+      // محاولة قراءة المبلغ من أي عمود رقمي إذا لم يوجد تطابق
+      const anyNum=(row,keys)=>{
+        const v=mapCol(row,keys);
+        if(v&&!isNaN(parseFloat(v))) return parseFloat(v);
+        return 0;
+      };
+
+      salImportBuf=rows.map((row,i)=>{
+        const total=anyNum(row,['الإجمالي الكلي','الإجمالي مع الضريبة','المبلغ الكلي','الإجمالي','total','Total','grand_total','المجموع الكلي','المجموع']);
+        const tax  =anyNum(row,['ضريبة القيمة المضافة','ضريبة','tax','VAT','vat','قيمة الضريبة']);
+        const amt  =anyNum(row,['الإجمالي قبل الضريبة','المجموع قبل الضريبة','subtotal','sub'])||
+                    (total>0&&tax>0 ? total-tax : total/1.15)||0;
+        return {
+          id: Date.now().toString()+i,
+          num:  mapCol(row,['رقم الطلب','رقم','order_id','Order ID','Order Number','#','id','ID']),
+          date: parseExcelDate(mapCol(row,['تاريخ الطلب','تاريخ الإنشاء','تاريخ','date','Date','created_at','created'])),
+          cust: mapCol(row,['اسم العميل','اسم الزبون','العميل','الاسم','customer','Customer','client','name']),
+          city: mapCol(row,['المدينة','المنطقة','city','City','region']),
+          amt:  parseFloat(amt.toFixed(2))||0,
+          tax:  parseFloat(tax.toFixed(2))||0,
+          total:parseFloat(total.toFixed(2))||0,
+          pay:  mapCol(row,['طريقة الدفع','الدفع','payment','Payment','payment_method'])||'سلة',
+          desc: mapCol(row,['المنتجات','المنتج','الطلبات','product','items','products','وصف'])||'',
+          status: mapSallaStatus(mapCol(row,['الحالة','حالة الطلب','status','Status'])),
+          src: 'salla'
+        };
+      });
+
+      // إصلاح القيم الناقصة
       salImportBuf=salImportBuf.map(o=>{
-        if(!o.total&&o.amt) o.total=o.amt*1.15;
-        if(!o.tax&&o.amt)   o.tax=o.amt*0.15;
-        if(!o.amt&&o.total) o.amt=o.total/1.15;
+        if(!o.total&&o.amt)  o.total=parseFloat((o.amt*1.15).toFixed(2));
+        if(!o.tax&&o.amt)    o.tax  =parseFloat((o.amt*0.15).toFixed(2));
+        if(!o.amt&&o.total)  o.amt  =parseFloat((o.total/1.15).toFixed(2));
         return o;
       });
+
+      // إزالة صفوف بدون أي بيانات
+      salImportBuf=salImportBuf.filter(o=>o.num||o.total>0||o.cust);
+
+      if(!salImportBuf.length){
+        msg.textContent=`لم يُعثر على بيانات. أعمدة الملف: ${cols.join(' | ')}`;
+        msg.style.color='var(--r)';
+        return;
+      }
       showSalImportPreview();
       msg.textContent='';
-    } catch(err){ msg.textContent='خطأ في قراءة الملف: '+err.message; msg.style.color='var(--r)'; }
+    } catch(err){
+      msg.textContent='خطأ في قراءة الملف: '+err.message;
+      msg.style.color='var(--r)';
+      console.error('parseSallaFile:', err);
+    }
   };
   reader.readAsArrayBuffer(file);
 }
