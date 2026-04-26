@@ -3066,12 +3066,11 @@ function parseSallaFile(file) {
       // fallback: قراءة بالترتيب (اسم العميل=0، جوال=1، مدينة=2، رقم الطلب=3، حالة=4، مجموع السلة=5، شحن=6، دفع=7، ضريبة=8، إجمالي=9، تاريخ=10)
       const byIdx=(row,i)=>{const v=Object.values(row)[i];return v!=null?String(v).replace(/[^\d.]/g,''):'';};
       salImportBuf=rows.map((row,i)=>{
-        const cart    = anyNum(row,['مجموع السلة'])    || parseFloat(byIdx(row,5))||0;
-        const ship    = anyNum(row,['تكلفة الشحن'])    || parseFloat(byIdx(row,6))||0;
-        const tax     = anyNum(row,['الضريبة','ضريبة القيمة المضافة','VAT','vat','tax']) || parseFloat(byIdx(row,8))||0;
-        const rawTotal= anyNum(row,['إجمالي الطلب (غير شامل التخفيضات)','إجمالي الطلب','إجمالي','total','Total']) || parseFloat(byIdx(row,9))||0;
-        const total   = rawTotal || parseFloat((cart+ship+tax).toFixed(2)) || 0;
-        const amt     = tax>0 ? parseFloat((total-tax).toFixed(2)) : parseFloat((total/1.15).toFixed(2));
+        const ship = anyNum(row,['تكلفة الشحن','الشحن']) || parseFloat(byIdx(row,6))||0;
+        const tax  = anyNum(row,['الضريبة','ضريبة القيمة المضافة','VAT','vat','tax']) || parseFloat(byIdx(row,8))||0;
+        // الضريبة = 15% من المبلغ بعد الخصم — نحسب الإجمالي الفعلي منها
+        const amt  = tax>0 ? parseFloat((tax/0.15).toFixed(2)) : 0;
+        const total= parseFloat((amt+ship+tax).toFixed(2));
         return {
           id:   Date.now().toString()+i,
           num:  mapCol(row,['رقم الطلب','order_id','Order ID','#','id']),
