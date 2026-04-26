@@ -934,6 +934,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
               </div>
               <div class="tscr"><table class="tbl" id="salImportTbl"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th></tr></thead><tbody id="salImportBody"></tbody></table></div>
             </div>
+            <div id="salDebug" style="display:none;margin-top:10px"></div>
             <div id="salImportMsg" style="margin-top:12px;font-size:13px;font-weight:700"></div>
           </div>
         </div>
@@ -3035,7 +3036,16 @@ function parseSallaFile(file) {
       if(!rows.length){msg.textContent='الملف فارغ أو غير مدعوم';msg.style.color='var(--r)';return;}
 
       const cols=Object.keys(rows[0]);
-      console.log('Salla columns raw:', cols);
+      // عرض أول 3 صفوف للتشخيص
+      const dbg=document.getElementById('salDebug');
+      if(dbg){
+        const sample=rows.slice(0,3);
+        dbg.innerHTML='<div style="font-size:11px;background:#f8fafc;border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:10px;overflow-x:auto"><strong>القيم الخام (أول 3 صفوف):</strong><br>'+
+        sample.map((r,i)=>`<div style="margin-top:6px;padding:6px;background:#fff;border-radius:6px;border:1px solid var(--bd)">
+          صف ${i+1}: `+cols.map(c=>`<span style="margin-left:8px"><b>${c}:</b> ${r[c]??'-'}</span>`).join(' ')+`</div>`).join('')+
+        '</div>';
+        dbg.style.display='block';
+      }
 
       // تنظيف اسم العمود من الأحرف غير المرئية والمسافات
       const norm=s=>String(s||'').replace(/[\u200f\u200e\u202a-\u202e\u2066-\u2069\u00a0\s]/g,'');
