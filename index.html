@@ -3161,7 +3161,9 @@ function showSalImportPreview() {
   const prev=document.getElementById('salImportPrev');
   const body=document.getElementById('salImportBody');
   const cnt =document.getElementById('salImportCount');
+  const y=getY();
   const active=salImportBuf.filter(o=>o.status!=='ملغي'&&o.status!=='مسترجع');
+  const activeY=active.filter(o=>(o.date||'').startsWith(y));
   const cancelled=salImportBuf.filter(o=>o.status==='ملغي'||o.status==='مسترجع');
   // بناء مجموعات الحالات
   _statusGroups = salImportBuf.reduce((acc,o)=>{
@@ -3185,9 +3187,10 @@ function showSalImportPreview() {
   const tot1=active.reduce((s,o)=>s+o.total,0);
   // طريقة 2: مجموع السلة + شحن + ضريبة (من الخام)
   const tot2=salImportBuf._raw ? active.reduce((s,o)=>s+(o._cart+o._ship+o._tax),0) : 0;
+  const totY=activeY.reduce((s,o)=>s+o.total,0);
   if(cnt) cnt.innerHTML=`
     تم قراءة <strong>${salImportBuf.length}</strong> طلب &nbsp;|&nbsp;
-    غير الملغي: <strong>${active.length}</strong> طلب &nbsp;|&nbsp;
+    <span style="color:var(--g);font-weight:800">إجمالي ${y}: ${fmt(totY)} ر.س (${activeY.length} طلب)</span> &nbsp;|&nbsp;
     ملغي: <strong style="color:var(--r)">${cancelled.length}</strong>
     <div style="margin-top:10px">
       <div style="font-size:12px;font-weight:800;margin-bottom:8px">اختر الحالات التي تريد احتسابها:</div>
