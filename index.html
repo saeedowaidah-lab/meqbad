@@ -3163,17 +3163,23 @@ function showSalImportPreview() {
     تم قراءة <strong>${salImportBuf.length}</strong> طلب &nbsp;|&nbsp;
     غير الملغي: <strong>${active.length}</strong> طلب &nbsp;|&nbsp;
     ملغي: <strong style="color:var(--r)">${cancelled.length}</strong>
-    <div style="margin-top:8px">
+    <div style="margin-top:10px;font-size:12px">
+      <strong>تفصيل حسب الحالة:</strong><br>
       ${Object.entries(
-        active.reduce((acc,o)=>{const y=(o.date||'').slice(0,4)||'غير محدد';if(!acc[y])acc[y]={cnt:0,tot:0};acc[y].cnt++;acc[y].tot+=o.total;return acc;},{})
-      ).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,g])=>`
-        <div style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;background:#f0fdf4;border-radius:8px;border:1.5px solid #bbf7d0;margin-left:8px;margin-bottom:6px">
-          <span style="font-size:12px;font-weight:800;color:var(--c2)">${y}</span>
-          <span style="font-size:13px;font-weight:900;color:var(--g)">${fmt(g.tot)} ر.س</span>
-          <span style="font-size:11px;color:var(--mu)">(${g.cnt} طلب)</span>
+        salImportBuf.reduce((acc,o)=>{
+          const st=o.status||'غير محدد';
+          if(!acc[st])acc[st]={cnt:0,tot:0};
+          acc[st].cnt++; acc[st].tot+=o.total;
+          return acc;
+        },{})
+      ).sort((a,b)=>b[1].tot-a[1].tot).map(([st,g])=>`
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bd2);border-radius:7px;border:1px solid var(--bd);margin-left:6px;margin-top:5px">
+          <span style="font-weight:800">${st}</span>
+          <span style="color:var(--g);font-weight:700">${fmt(g.tot)} ر.س</span>
+          <span style="color:var(--mu)">(${g.cnt})</span>
         </div>`).join('')}
     </div>
-    <div style="font-size:11px;color:var(--mu);margin-top:6px">قارن مع سلة حسب السنة</div>`;
+    <div style="font-size:11px;color:var(--mu);margin-top:8px">الرقم المطلوب من سلة: <strong style="color:var(--c2)">292,135.05 ر.س</strong></div>`;
   body.innerHTML=salImportBuf.slice(0,50).map(o=>`
     <tr>
       <td style="font-weight:800">${o.num||'—'}</td>
