@@ -3031,7 +3031,7 @@ function parseSallaFile(file) {
     try {
       const wb=XLSX.read(e.target.result,{type:'array'});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
       if(!rows.length){msg.textContent='الملف فارغ أو غير مدعوم';msg.style.color='var(--r)';return;}
 
       const cols=Object.keys(rows[0]);
@@ -3057,7 +3057,9 @@ function parseSallaFile(file) {
       };
 
       const anyNum=(row,keys)=>{
-        const v=mapCol(row,keys).replace(/[^\d.]/g,'');
+        const raw=mapCol(row,keys);
+        if(typeof raw==='number') return raw;
+        const v=String(raw).replace(/[^\d.]/g,'');
         return v ? parseFloat(v)||0 : 0;
       };
 
@@ -3139,9 +3141,15 @@ function showSalImportPreview() {
   const prev=document.getElementById('salImportPrev');
   const body=document.getElementById('salImportBody');
   const cnt =document.getElementById('salImportCount');
-  const done=salImportBuf.filter(o=>o.status==='مكتمل');
-  const totDone=done.reduce((s,o)=>s+o.total,0);
-  if(cnt) cnt.textContent=`تم قراءة ${salImportBuf.length} طلب (${done.length} مكتمل — إجمالي: ${fmt(totDone)} ر.س) — تحقق قبل الاستيراد`;
+  const active=salImportBuf.filter(o=>o.status!=='ملغي'&&o.status!=='مسترجع');
+  const cancelled=salImportBuf.filter(o=>o.status==='ملغي'||o.status==='مسترجع');
+  const totAll=salImportBuf.reduce((s,o)=>s+o.total,0);
+  const totActive=active.reduce((s,o)=>s+o.total,0);
+  if(cnt) cnt.innerHTML=`
+    تم قراءة <strong>${salImportBuf.length}</strong> طلب &nbsp;|&nbsp;
+    غير الملغي: <strong style="color:var(--g)">${active.length} طلب — ${fmt(totActive)} ر.س</strong> &nbsp;|&nbsp;
+    ملغي: <strong style="color:var(--r)">${cancelled.length} طلب</strong>
+    <div style="font-size:11px;color:var(--mu);margin-top:4px">قارن الإجمالي مع سلة قبل الاستيراد</div>`;
   body.innerHTML=salImportBuf.slice(0,50).map(o=>`
     <tr>
       <td style="font-weight:800">${o.num||'—'}</td>
