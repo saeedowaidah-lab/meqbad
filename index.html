@@ -845,128 +845,46 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
 
       <!-- Tabs -->
       <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
-        <button class="btn sal-tab on" id="stab1" onclick="switchSTab(1)">➕ إضافة طلب</button>
-        <button class="btn sal-tab" id="stab2" onclick="switchSTab(2)">📂 استيراد من سلة</button>
-        <button class="btn sal-tab" id="stab3" onclick="switchSTab(3)">📋 جميع الطلبات</button>
-        <button class="btn sal-tab" id="stab4" onclick="switchSTab(4)">📊 تقارير شهرية</button>
+        <button class="btn sal-tab on" id="stab1" onclick="switchSTab(1)">📊 المبيعات الشهرية</button>
+        <button class="btn sal-tab" id="stab2" onclick="switchSTab(2)">🏦 كشف البنك</button>
+        <button class="btn sal-tab" id="stab3" onclick="switchSTab(3)">📈 الأرباح والخسائر</button>
       </div>
 
-      <!-- Tab 1: Add order -->
+      <!-- Tab 1: Monthly sales + injected capital -->
       <div id="spane1">
         <div class="card">
-          <div class="ch"><h3 id="salFormTitle">➕ إضافة طلب مبيعات</h3></div>
-          <div class="cb">
-            <div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-              <div class="fi"><label>رقم الطلب</label><input class="si" id="salNum" placeholder="مثال: 100001"></div>
-              <div class="fi"><label>تاريخ الطلب</label><input class="si" type="date" id="salDate"></div>
-              <div class="fi"><label>اسم العميل</label><input class="si" id="salCust" placeholder="اختياري"></div>
-              <div class="fi"><label>المدينة</label><input class="si" id="salCity" placeholder="اختياري"></div>
-            </div>
-            <div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-top:10px">
-              <div class="fi"><label>إجمالي الطلب (قبل الضريبة)</label><input class="si" type="number" id="salAmt" placeholder="0.00" min="0" step="0.01" oninput="calcSalTax()"></div>
-              <div class="fi"><label>الضريبة 15%</label><input class="si" type="number" id="salTax" placeholder="0.00" min="0" step="0.01" readonly style="background:#f8fafc;color:var(--mu)"></div>
-              <div class="fi"><label>الإجمالي شامل الضريبة</label><input class="si" type="number" id="salTotal" placeholder="0.00" min="0" step="0.01" readonly style="background:#f8fafc;font-weight:900;color:var(--c2)"></div>
-              <div class="fi"><label>طريقة الدفع</label>
-                <select class="si" id="salPay">
-                  <option value="بطاقة">بطاقة ائتمان</option>
-                  <option value="مدى">مدى</option>
-                  <option value="تحويل">تحويل بنكي</option>
-                  <option value="نقد">نقد</option>
-                  <option value="سلة">سلة Pay</option>
-                  <option value="أخرى">أخرى</option>
-                </select>
-              </div>
-            </div>
-            <div class="fg" style="grid-template-columns:1fr;margin-top:10px">
-              <div class="fi"><label>المنتجات / ملاحظات</label><textarea class="si" id="salDesc" rows="2" placeholder="أسماء المنتجات أو ملاحظة..." style="resize:vertical"></textarea></div>
-            </div>
-            <div class="fi" style="margin-top:10px">
-              <label>الحالة</label>
-              <select class="si" id="salStatus" style="max-width:200px">
-                <option value="مكتمل">✅ مكتمل</option>
-                <option value="معلق">⏳ معلق</option>
-                <option value="ملغي">❌ ملغي</option>
-                <option value="مسترجع">↩ مسترجع</option>
-              </select>
-            </div>
-            <div class="fac" style="margin-top:16px">
-              <button class="btn" onclick="rstSal()">إلغاء</button>
-              <button class="btn bp" onclick="savSal()"><span id="salSaveLbl">💾 حفظ الطلب</span></button>
-            </div>
-            <div class="toast ok" id="salToast" style="margin-top:10px;display:none">✅ تم حفظ الطلب</div>
+          <div class="ch">
+            <h3>📊 المبيعات الشهرية</h3>
+            <div style="font-size:12px;color:var(--mu);background:var(--bd2);padding:4px 12px;border-radius:20px;font-weight:600">أدخل المبالغ من تقرير سلة مباشرة</div>
           </div>
+          <div class="cb" id="salMonthGrid"></div>
         </div>
       </div>
 
-      <!-- Tab 2: Import from Salla -->
+      <!-- Tab 2: Bank statement -->
       <div id="spane2" style="display:none">
         <div class="card">
-          <div class="ch"><h3>📂 استيراد طلبات سلة</h3></div>
+          <div class="ch"><h3>🏦 كشف الحساب البنكي</h3></div>
           <div class="cb">
-            <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:#1e40af;line-height:2">
-              <strong>📋 كيف تصدّر طلباتك من سلة؟</strong><br>
-              1. افتح لوحة تحكم سلة ← <strong>الطلبات</strong><br>
-              2. اضغط <strong>تصدير</strong> في أعلى الصفحة<br>
-              3. اختر <strong>Excel (.xlsx)</strong> وحدد الفترة الزمنية<br>
-              4. ارفع الملف هنا ↓
+            <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:#1e40af;line-height:1.8">
+              ارفع كشف حسابك البنكي للمرجعية والمطابقة. يُحفظ محلياً على جهازك فقط.
             </div>
-            <div style="margin-bottom:12px;padding:10px 14px;background:#fff8e1;border-radius:10px;border:1.5px solid #fde68a;display:flex;align-items:center;justify-content:space-between;gap:10px">
-              <div style="font-size:12px;color:#92400e;font-weight:700">⚠️ إذا سبق واستوردت بيانات خاطئة، احذفها أولاً ثم أعد الاستيراد</div>
-              <button class="btn brd sm" style="white-space:nowrap;color:var(--r);border-color:var(--r)" onclick="deleteSallaImport()">🗑 حذف بيانات سلة</button>
+            <div onclick="document.getElementById('bankFileInp').click()" style="border:2px dashed var(--bd);border-radius:12px;padding:36px;text-align:center;cursor:pointer;background:var(--bd2)">
+              <div style="font-size:38px;margin-bottom:8px">🏦</div>
+              <div style="font-size:14px;font-weight:800;color:var(--c2)">اضغط لرفع كشف الحساب</div>
+              <div style="font-size:12px;color:var(--mu);margin-top:4px">PDF أو صورة</div>
             </div>
-            <div id="salImportZone" onclick="document.getElementById('salFileInp').click()"
-              style="border:2px dashed var(--bd);border-radius:12px;padding:40px;text-align:center;cursor:pointer;background:var(--bd2);transition:.2s"
-              ondragover="event.preventDefault();this.style.borderColor='var(--c3)'"
-              ondragleave="this.style.borderColor='var(--bd)'"
-              ondrop="handleSalDrop(event)">
-              <div style="font-size:40px;margin-bottom:10px">📊</div>
-              <div style="font-size:14px;font-weight:800;color:var(--c2);margin-bottom:4px">اسحب ملف Excel هنا أو اضغط للرفع</div>
-              <div style="font-size:12px;color:var(--mu)">.xlsx — تصدير طلبات سلة</div>
-            </div>
-            <input type="file" id="salFileInp" accept=".xlsx,.xls,.csv" style="display:none" onchange="importSallaFile(this)">
-            <div id="salImportPrev" style="display:none;margin-top:16px">
-              <div class="ch" style="margin-bottom:10px">
-                <h3 id="salImportCount"></h3>
-                <div style="display:flex;gap:8px">
-                  <button class="btn bp" onclick="confirmSalImport()">✅ استيراد الكل</button>
-                  <button class="btn brd sm" onclick="document.getElementById('salImportPrev').style.display='none'">إلغاء</button>
-                </div>
-              </div>
-              <div class="tscr"><table class="tbl" id="salImportTbl"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th></tr></thead><tbody id="salImportBody"></tbody></table></div>
-            </div>
-            <div id="salDebug" style="display:none;margin-top:10px"></div>
-            <div id="salImportMsg" style="margin-top:12px;font-size:13px;font-weight:700"></div>
+            <input type="file" id="bankFileInp" accept=".pdf,image/*" style="display:none" onchange="uploadBankStatement(this)">
+            <div id="bankList" style="margin-top:16px"></div>
           </div>
         </div>
       </div>
 
-      <!-- Tab 3: All orders -->
+      <!-- Tab 3: P&L -->
       <div id="spane3" style="display:none">
         <div class="card">
-          <div class="ch">
-            <h3>📋 جميع الطلبات</h3>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <input class="si" id="salSrch" placeholder="🔍 بحث..." style="max-width:180px;padding:6px 12px;font-size:13px" oninput="renderSalList()">
-              <select class="si" id="salSrchStatus" style="max-width:140px;padding:6px 10px;font-size:13px" onchange="renderSalList()">
-                <option value="">كل الحالات</option>
-                <option value="مكتمل">✅ مكتمل</option>
-                <option value="معلق">⏳ معلق</option>
-                <option value="ملغي">❌ ملغي</option>
-                <option value="مسترجع">↩ مسترجع</option>
-              </select>
-              <span id="salCount" style="font-size:12px;color:var(--mu);font-weight:700;background:var(--bd2);padding:3px 11px;border-radius:20px"></span>
-            </div>
-          </div>
-          <div class="cb np">
-            <div class="tscr"><table class="tbl"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>العميل</th><th>المدينة</th><th>الإجمالي</th><th>الضريبة</th><th>الحالة</th><th>الدفع</th><th></th></tr></thead><tbody id="salBody"></tbody></table></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab 4: Monthly reports -->
-      <div id="spane4" style="display:none">
-        <div class="card"><div class="ch"><h3>📊 تقارير المبيعات الشهرية</h3></div>
-          <div class="cb" id="salRepBody"></div>
+          <div class="ch"><h3>📈 تقرير الأرباح والخسائر</h3><span id="plYear" style="font-size:12px;color:var(--mu);font-weight:700"></span></div>
+          <div class="cb np" id="plBody"></div>
         </div>
       </div>
     </div>
@@ -2850,23 +2768,154 @@ let salEditId = null;
 let salImportBuf = [];
 
 // ── Routing ──
+// ── Injected capital data (localStorage) ──
+let idata = JSON.parse(localStorage.getItem('inject_data')||'{}');
+function saveInject(y, m, v) {
+  const k = y+'_'+m;
+  idata[k] = parseFloat(v)||0;
+  localStorage.setItem('inject_data', JSON.stringify(idata));
+  renderPL();
+}
+function getInject(y, m) { return parseFloat(idata[y+'_'+m])||0; }
+
+// ── Bank statements (localStorage) ──
+let bankStatements = JSON.parse(localStorage.getItem('bank_statements')||'[]');
+function uploadBankStatement(inp) {
+  const file = inp.files[0]; if(!file) return;
+  const entry = { name: file.name, date: new Date().toLocaleDateString('ar-SA'), size: (file.size/1024).toFixed(0)+'KB', id: Date.now() };
+  bankStatements.unshift(entry);
+  localStorage.setItem('bank_statements', JSON.stringify(bankStatements.slice(0,20)));
+  renderBankList();
+  inp.value='';
+}
+function deleteBankStatement(id) {
+  bankStatements = bankStatements.filter(b=>b.id!==id);
+  localStorage.setItem('bank_statements', JSON.stringify(bankStatements));
+  renderBankList();
+}
+function renderBankList() {
+  const el=document.getElementById('bankList'); if(!el) return;
+  el.innerHTML = bankStatements.length ? bankStatements.map(b=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bd2);border-radius:10px;border:1px solid var(--bd);margin-bottom:8px">
+      <div>
+        <div style="font-size:13px;font-weight:800">📄 ${b.name}</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:2px">${b.date} · ${b.size}</div>
+      </div>
+      <button class="btn brd sm" onclick="deleteBankStatement(${b.id})">🗑</button>
+    </div>`).join('')
+  : '<div style="text-align:center;padding:20px;color:var(--mu);font-size:13px">لا توجد كشوفات مرفوعة</div>';
+}
+
+function renderSalGrid() {
+  const el=document.getElementById('salMonthGrid'); if(!el) return;
+  const y=getY();
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+      ${MN.map((mn,m)=>{
+        const k=y+'_'+m;
+        const sal=parseFloat(sdata[k])||0;
+        const inj=getInject(y,m);
+        const exp=gl(m,y).reduce((s,i)=>s+i.total,0);
+        const profit=sal-exp;
+        return `<div style="background:var(--bd2);border-radius:12px;padding:14px 16px;border:1.5px solid var(--bd)">
+          <div style="font-size:13px;font-weight:900;color:var(--c2);margin-bottom:10px">📅 ${mn}</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div>
+              <label style="font-size:10.5px;font-weight:800;color:var(--mu);display:block;margin-bottom:3px">💰 مبيعات سلة (شامل الضريبة)</label>
+              <input type="number" class="si" value="${sal||''}" placeholder="0.00" min="0" step="0.01"
+                style="font-weight:900;font-size:15px;color:var(--g)"
+                oninput="sdata['${k}']=this.value;savSd(${y},${m},this.value);renderSalKPI();renderPL()">
+            </div>
+            <div>
+              <label style="font-size:10.5px;font-weight:800;color:var(--mu);display:block;margin-bottom:3px">💵 رأس مال مضخ شخصي</label>
+              <input type="number" class="si" value="${inj||''}" placeholder="0.00" min="0" step="0.01"
+                style="font-weight:900;font-size:15px;color:#7c3aed"
+                oninput="saveInject(${y},${m},this.value)">
+            </div>
+            <div style="padding:8px 12px;background:#fff;border-radius:8px;border:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+              <span style="font-size:11px;color:var(--mu);font-weight:700">المصروفات</span>
+              <span style="font-size:13px;font-weight:900;color:var(--r)">${fmt(exp)} ر.س</span>
+            </div>
+            ${sal>0?`<div style="padding:8px 12px;background:${profit>=0?'#f0fdf4':'#fff1f2'};border-radius:8px;border:1px solid ${profit>=0?'#bbf7d0':'#fecaca'};display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;font-weight:800;color:${profit>=0?'var(--g)':'var(--r)'}">${profit>=0?'✅ صافي ربح':'❌ خسارة'}</span>
+              <span style="font-size:14px;font-weight:900;color:${profit>=0?'var(--g)':'var(--r)'}">${fmt(Math.abs(profit))} ر.س</span>
+            </div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderPL() {
+  const el=document.getElementById('plBody'); if(!el) return;
+  const py=document.getElementById('plYear'); if(py) py.textContent=getY();
+  const y=getY();
+  let totSal=0,totExp=0,totInj=0;
+  const rows=MN.map((mn,m)=>{
+    const sal=parseFloat(sdata[y+'_'+m])||0;
+    const inj=getInject(y,m);
+    const exp=gl(m,y).reduce((s,i)=>s+i.total,0);
+    const profit=sal-exp;
+    totSal+=sal; totExp+=exp; totInj+=inj;
+    return {mn,sal,inj,exp,profit};
+  }).filter(r=>r.sal>0||r.exp>0||r.inj>0);
+  const totProfit=totSal-totExp;
+  el.innerHTML=`
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr>
+          <th>الشهر</th>
+          <th style="color:var(--g)">المبيعات</th>
+          <th style="color:var(--r)">المصروفات</th>
+          <th style="color:#7c3aed">المضخ</th>
+          <th>صافي الربح</th>
+          <th>هامش الربح</th>
+        </tr></thead>
+        <tbody>
+          ${rows.length?rows.map(r=>`<tr>
+            <td style="font-weight:800">${r.mn}</td>
+            <td style="color:var(--g);font-weight:700">${fmtP(r.sal)}</td>
+            <td style="color:var(--r);font-weight:700">${fmtP(r.exp)}</td>
+            <td style="color:#7c3aed;font-weight:700">${r.inj>0?fmtP(r.inj):'—'}</td>
+            <td style="font-weight:900;color:${r.profit>=0?'var(--g)':'var(--r)'}">${r.sal>0?(r.profit>=0?'+':'')+fmtP(r.profit):'—'}</td>
+            <td style="font-weight:700;color:${r.profit>=0?'var(--g)':'var(--r)'}">${r.sal>0?((r.profit/r.sal)*100).toFixed(1)+'%':'—'}</td>
+          </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--mu)">أدخل المبيعات في التبويب الأول</td></tr>'}
+        </tbody>
+        <tfoot>
+          <tr style="font-weight:900;background:var(--bd2)">
+            <td>الإجمالي</td>
+            <td style="color:var(--g)">${fmtP(totSal)}</td>
+            <td style="color:var(--r)">${fmtP(totExp)}</td>
+            <td style="color:#7c3aed">${totInj>0?fmtP(totInj):'—'}</td>
+            <td style="font-size:15px;color:${totProfit>=0?'var(--g)':'var(--r)'}">${totSal>0?(totProfit>=0?'+':'')+fmtP(totProfit):'—'}</td>
+            <td style="color:${totProfit>=0?'var(--g)':'var(--r)'}">${totSal>0?((totProfit/totSal)*100).toFixed(1)+'%':'—'}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    ${totInj>0?`<div style="margin-top:16px;padding:12px 16px;background:#faf5ff;border-radius:10px;border:1.5px solid #e9d5ff;display:flex;justify-content:space-between">
+      <span style="font-size:13px;font-weight:700;color:#7c3aed">💵 إجمالي رأس المال المضخ</span>
+      <span style="font-size:16px;font-weight:900;color:#7c3aed">${fmtP(totInj)} ر.س</span>
+    </div>`:''}`;
+}
+
 function rSales() {
   renderSalKPI();
-  renderSalList();
-  renderSalReports();
+  renderSalGrid();
+  renderBankList();
+  renderPL();
   switchSTab(1);
-  const d = document.getElementById('salDate');
-  if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
 }
 
 // ── Tabs ──
 function switchSTab(n) {
-  [1,2,3,4].forEach(i => {
+  [1,2,3].forEach(i => {
     document.getElementById('spane'+i).style.display = i===n?'block':'none';
     document.getElementById('stab'+i).classList.toggle('on', i===n);
   });
-  if (n===3) renderSalList();
-  if (n===4) renderSalReports();
+  if (n===1) renderSalGrid();
+  if (n===2) renderBankList();
+  if (n===3) renderPL();
 }
 
 // ── Tax calc ──
@@ -2940,20 +2989,20 @@ function delSal(id) {
 // ── KPI ──
 function renderSalKPI() {
   const y = getY();
-  const all_y     = sales.filter(s=>s.date&&s.date.startsWith(y));
-  const active    = all_y.filter(s=>s.status!=='ملغي'&&s.status!=='مسترجع');
-  const cancelled = all_y.filter(s=>s.status==='ملغي'||s.status==='مسترجع');
-  const tot = active.reduce((s,o)=>s+(o.total||0),0);
-  const tax = active.reduce((s,o)=>s+(o.tax||0),0);
-  const cnt = active.length;
-  const avg = cnt ? tot/cnt : 0;
+  let totSal = 0, activeMonths = 0;
+  MN.forEach((_, m) => {
+    const sal = parseFloat(sdata[y+'_'+m]) || 0;
+    if (sal > 0) { totSal += sal; activeMonths++; }
+  });
+  const totExp = MN.reduce((s, _, m) => s + gl(m, y).reduce((a, i) => a + i.total, 0), 0);
+  const totInj = MN.reduce((s, _, m) => s + getInject(y, m), 0);
+  const profit = totSal - totExp;
   const el = document.getElementById('salMcs'); if(!el) return;
   el.innerHTML = `
-    <div class="mc gr"><div class="mcs"></div><span class="mci">💰</span><div class="mcl">إجمالي المبيعات ${y}</div><div class="mcv">${fmtP(tot)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">كل الحالات ما عدا الملغي</div></div>
-    <div class="mc bl"><div class="mcs"></div><span class="mci">🛍</span><div class="mcl">عدد الطلبات</div><div class="mcv">${cnt}</div><div class="mcsub">لعام ${y}</div></div>
-    <div class="mc am"><div class="mcs"></div><span class="mci">📊</span><div class="mcl">متوسط قيمة الطلب</div><div class="mcv">${fmtP(avg)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">لعام ${y}</div></div>
-    <div class="mc rd"><div class="mcs"></div><span class="mci">🧾</span><div class="mcl">ضريبة المخرجات</div><div class="mcv">${fmtP(tax)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">ما عدا الملغي</div></div>
-    ${cancelled.length?`<div class="mc" style="background:linear-gradient(135deg,#fff1f2,#fee2e2);border:1.5px solid #fecaca"><div class="mcs"></div><span class="mci">❌</span><div class="mcl">ملغي / مسترجع</div><div class="mcv" style="color:#dc2626">${cancelled.length}</div><div class="mcsub">مؤرشف — غير محتسب</div></div>`:''}`;
+    <div class="mc gr"><div class="mcs"></div><span class="mci">💰</span><div class="mcl">إجمالي المبيعات ${y}</div><div class="mcv">${fmtP(totSal)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">${activeMonths} شهر مُدخل</div></div>
+    <div class="mc rd"><div class="mcs"></div><span class="mci">📉</span><div class="mcl">إجمالي المصروفات</div><div class="mcv">${fmtP(totExp)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">لعام ${y}</div></div>
+    <div class="mc ${profit>=0&&totSal>0?'gr':'rd'}"><div class="mcs"></div><span class="mci">${profit>=0&&totSal>0?'📈':'📉'}</span><div class="mcl">صافي الربح</div><div class="mcv">${totSal>0?(profit>=0?'+':'')+fmtP(profit):'—'}<span style="font-size:12px;font-weight:600">${totSal>0?' ر.س':''}</span></div><div class="mcsub">${totSal>0?((profit/totSal)*100).toFixed(1)+'% هامش ربح':''}</div></div>
+    ${totInj>0?`<div class="mc" style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1.5px solid #e9d5ff"><div class="mcs"></div><span class="mci">💵</span><div class="mcl">رأس مال مضخ</div><div class="mcv" style="color:#7c3aed">${fmtP(totInj)}<span style="font-size:12px;font-weight:600"> ر.س</span></div><div class="mcsub">لعام ${y}</div></div>`:''}`;
 }
 
 // ── List ──
